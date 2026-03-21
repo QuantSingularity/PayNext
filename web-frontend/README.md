@@ -4,13 +4,13 @@ Modern payment processing platform frontend built with React and Material-UI.
 
 ## Features
 
-- 🎨 Modern Material-UI design system
-- 🔐 Secure authentication and authorization
-- 💳 Payment processing workflows
-- 📊 Real-time dashboard and analytics
-- 📱 Fully responsive design
-- ♿ Accessibility compliant
-- 🧪 Comprehensive test coverage
+- Modern Material-UI design system
+- Secure authentication and authorization
+- Payment processing workflows
+- Real-time dashboard and analytics
+- Fully responsive design
+- Accessibility compliant
+- Comprehensive test coverage
 
 ## Prerequisites
 
