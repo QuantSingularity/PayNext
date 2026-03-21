@@ -4,7 +4,7 @@
 [![Test Coverage](https://img.shields.io/badge/coverage-87%25-brightgreen)](https://github.com/quantsingularity/PayNext/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## 💳 Modern Microservices Payment Platform
+## Modern Microservices Payment Platform
 
 PayNext is a robust, scalable payment processing platform built on a microservices architecture. It provides secure, fast, and reliable payment solutions for businesses of all sizes, with support for multiple payment methods and currencies.
 
