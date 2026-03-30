@@ -1,5 +1,5 @@
 import os
-from typing import Dict
+from typing import Any, Dict
 import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException

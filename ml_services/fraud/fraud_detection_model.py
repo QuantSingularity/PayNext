@@ -1,3 +1,4 @@
+from typing import Any
 import os
 import joblib
 import numpy as np
@@ -144,7 +145,7 @@ def train_fraud_model(
     )
     logger.info("Autoencoder training complete.")
     reconstructions = autoencoder.predict(X)
-    mse = np.mean(np.power(X - reconstructions, 2), axis=1)
+    np.mean(np.power(X - reconstructions, 2), axis=1)
     joblib.dump(autoencoder, os.path.join(model_dir, "fraud_autoencoder_model.joblib"))
     logger.info(
         "Fraud detection Autoencoder model trained and saved to PayNext/ml_services/fraud_autoencoder_model.joblib"
