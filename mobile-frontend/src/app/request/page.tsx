@@ -1,33 +1,31 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { useState } from "react";
+import { Copy, Loader2 } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import { Copy, Loader2 } from "lucide-react";
-import { mockApiClient, useMockData, apiClient } from "@/lib/api-client";
 import { useAuth } from "@/contexts/AuthContext";
+import { apiClient, mockApiClient, useMockData } from "@/lib/api-client";
 
 // Define the form schema using Zod
 const formSchema = z.object({

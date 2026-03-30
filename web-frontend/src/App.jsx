@@ -1,24 +1,23 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import ThemeConfig from "./theme/ThemeConfig";
-import Navbar from "./components/Navbar";
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import Footer from "./components/Footer";
-import PageTransition from "./components/PageTransition";
+import Navbar from "./components/Navbar";
 import PageLoader from "./components/PageLoader";
-
+import PageTransition from "./components/PageTransition";
+import AboutPage from "./pages/AboutPage";
+import Dashboard from "./pages/Dashboard";
+import HelpCenter from "./pages/HelpCenter";
 // Pages
 import Homepage from "./pages/Homepage";
-import AboutPage from "./pages/AboutPage";
-import PricingPage from "./pages/PricingPage";
-import HelpCenter from "./pages/HelpCenter";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
-import SendMoney from "./pages/SendMoney";
 import NotFound from "./pages/NotFound";
+import PricingPage from "./pages/PricingPage";
+import Register from "./pages/Register";
+import SendMoney from "./pages/SendMoney";
+import ThemeConfig from "./theme/ThemeConfig";
 
 const App = () => {
-  const [loading, setLoading] = React.useState(false);
+  const [loading, _setLoading] = React.useState(false);
 
   return (
     <ThemeConfig>

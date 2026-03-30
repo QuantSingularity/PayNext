@@ -1,23 +1,23 @@
-import React, { useState } from "react";
+import { Check as CheckIcon, Star as StarIcon } from "@mui/icons-material";
 import {
-  Container,
-  Typography,
   Box,
-  Grid,
-  Paper,
   Button,
   Card,
-  CardContent,
   CardActions,
+  CardContent,
+  Chip,
+  Container,
+  FormControlLabel,
+  Grid,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
-  Chip,
+  Paper,
   Switch,
-  FormControlLabel,
+  Typography,
 } from "@mui/material";
-import { Check as CheckIcon, Star as StarIcon } from "@mui/icons-material";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const PricingPage = () => {

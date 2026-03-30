@@ -1,21 +1,19 @@
-import React from "react";
 import {
-  Container,
-  Typography,
-  Box,
-  Grid,
-  Paper,
-  Avatar,
-  Card,
-  CardContent,
-  Chip,
-} from "@mui/material";
-import {
+  People as PeopleIcon,
   Security as SecurityIcon,
   Speed as SpeedIcon,
-  People as PeopleIcon,
   TrendingUp as TrendingUpIcon,
 } from "@mui/icons-material";
+import {
+  Avatar,
+  Box,
+  Card,
+  Chip,
+  Container,
+  Grid,
+  Paper,
+  Typography,
+} from "@mui/material";
 
 const AboutPage = () => {
   const stats = [

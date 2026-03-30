@@ -1,7 +1,6 @@
-import React from "react";
-import { CSSTransition, TransitionGroup } from "react-transition-group";
-import { useLocation } from "react-router-dom";
 import { Box } from "@mui/material";
+import { useLocation } from "react-router-dom";
+import { CSSTransition, TransitionGroup } from "react-transition-group";
 
 // Page transition component that adds smooth animations between route changes
 const PageTransition = ({ children }) => {

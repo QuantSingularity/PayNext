@@ -1,5 +1,5 @@
-import PaymentService from "../PaymentService";
 import api from "../api"; // Assuming api.js handles actual HTTP requests
+import PaymentService from "../PaymentService";
 
 // Mock the api module
 jest.mock("../api");

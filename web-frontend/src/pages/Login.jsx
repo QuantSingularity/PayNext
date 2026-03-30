@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from "react";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  Grid,
+  IconButton,
+  InputAdornment,
+  Link,
+  Paper,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../services/api";
-import {
-  Container,
-  Typography,
-  TextField,
-  Button,
-  Paper,
-  Box,
-  Grid,
-  Link,
-  InputAdornment,
-  IconButton,
-  Alert,
-  CircularProgress,
-} from "@mui/material";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 const Login = ({ onLogin }) => {
   const [formData, setFormData] = useState({
@@ -23,11 +23,11 @@ const Login = ({ onLogin }) => {
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [_error, setError] = useState("");
+  const [_loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
+  const _handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -35,11 +35,11 @@ const Login = ({ onLogin }) => {
     });
   };
 
-  const handleClickShowPassword = () => {
+  const _handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
 
-  const handleSubmit = async (e) => {
+  const _handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -56,10 +56,9 @@ const Login = ({ onLogin }) => {
       if (onLogin) onLogin();
       navigate("/dashboard");
     } catch (err) {
-      const errorMessage =
-        err.response && err.response.data && err.response.data.message
-          ? err.response.data.message
-          : "Invalid email or password. Please try again.";
+      const errorMessage = err.response?.data?.message
+        ? err.response.data.message
+        : "Invalid email or password. Please try again.";
       setError(errorMessage);
       console.error("Login error:", err);
     } finally {

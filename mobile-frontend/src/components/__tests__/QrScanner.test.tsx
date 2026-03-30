@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, waitFor } from "@testing-library/react";
 import QrScanner from "@/components/QrScanner";
 
 // Mock html5-qrcode

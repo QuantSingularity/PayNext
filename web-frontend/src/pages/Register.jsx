@@ -1,26 +1,26 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { authService } from "../services/api";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import {
-  Container,
-  Typography,
-  TextField,
-  Button,
-  Paper,
-  Box,
-  Grid,
-  Link,
-  InputAdornment,
-  IconButton,
   Alert,
+  Box,
+  Button,
+  Checkbox,
   CircularProgress,
-  Stepper,
+  Container,
+  FormControlLabel,
+  Grid,
+  IconButton,
+  InputAdornment,
+  Link,
+  Paper,
   Step,
   StepLabel,
-  Checkbox,
-  FormControlLabel,
+  Stepper,
+  TextField,
+  Typography,
 } from "@mui/material";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { authService } from "../services/api";
 
 const Register = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -116,10 +116,9 @@ const Register = () => {
       });
       navigate("/login");
     } catch (err) {
-      const errorMessage =
-        err.response && err.response.data && err.response.data.message
-          ? err.response.data.message
-          : "Registration failed. Please try again.";
+      const errorMessage = err.response?.data?.message
+        ? err.response.data.message
+        : "Registration failed. Please try again.";
       setError(errorMessage);
       console.error("Registration error:", err);
     } finally {

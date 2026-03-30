@@ -1,7 +1,7 @@
-import React, { useEffect } from "react";
-import { motion, useAnimation } from "framer-motion";
-import { useInView } from "react-intersection-observer";
 import { Box } from "@mui/material";
+import { motion, useAnimation } from "framer-motion";
+import React, { useEffect } from "react";
+import { useInView } from "react-intersection-observer";
 
 // Animation variants for different entrance effects
 const fadeInUp = {
@@ -85,7 +85,6 @@ const AnimatedElement = ({
         return fadeIn;
       case "scaleUp":
         return scaleUp;
-      case "fadeInUp":
       default:
         return fadeInUp;
     }

@@ -1,31 +1,31 @@
-import React, { useState, useEffect } from "react";
+import {
+  AccountCircle as AccountCircleIcon,
+  KeyboardArrowDown as KeyboardArrowDownIcon,
+  Menu as MenuIcon,
+} from "@mui/icons-material";
 import {
   AppBar,
-  Toolbar,
-  Typography,
-  Button,
-  IconButton,
+  Avatar,
   Box,
+  Button,
+  Container,
+  Divider,
   Drawer,
+  IconButton,
   List,
   ListItem,
   ListItemText,
-  Container,
-  useScrollTrigger,
-  Slide,
-  useMediaQuery,
-  useTheme,
-  Avatar,
   Menu,
   MenuItem,
-  Divider,
+  Slide,
+  Toolbar,
+  Typography,
+  useMediaQuery,
+  useScrollTrigger,
+  useTheme,
 } from "@mui/material";
-import {
-  Menu as MenuIcon,
-  KeyboardArrowDown as KeyboardArrowDownIcon,
-  AccountCircle as AccountCircleIcon,
-} from "@mui/icons-material";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 // Hide AppBar on scroll down
 function HideOnScroll(props) {
@@ -41,7 +41,7 @@ function HideOnScroll(props) {
 
 const Navbar = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const _isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -55,7 +55,7 @@ const Navbar = () => {
     // Check if user is authenticated
     const authStatus = localStorage.getItem("isAuthenticated");
     setIsAuthenticated(authStatus === "true");
-  }, [location]);
+  }, []);
 
   const handleDrawerToggle = () => {
     setDrawerOpen(!drawerOpen);

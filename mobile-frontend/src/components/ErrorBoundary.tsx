@@ -1,6 +1,8 @@
 "use client";
 
-import React, { Component, ReactNode } from "react";
+import { AlertCircle } from "lucide-react";
+import type React from "react";
+import { Component, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,7 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AlertCircle } from "lucide-react";
 
 interface Props {
   children: ReactNode;

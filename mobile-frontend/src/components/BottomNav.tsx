@@ -1,9 +1,8 @@
 "use client";
 
+import { Home, Landmark, Send, User } from "lucide-react"; // Import Lucide icons
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React from "react";
-import { Home, Send, Landmark, User } from "lucide-react"; // Import Lucide icons
 import { cn } from "@/lib/utils"; // Import utility for conditional classes
 
 const navItems = [

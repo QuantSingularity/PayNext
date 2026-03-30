@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
 import {
+  Backdrop,
   Box,
   CircularProgress,
-  Typography,
   Fade,
-  Backdrop,
+  Typography,
 } from "@mui/material";
+import { useEffect, useState } from "react";
 
 const PageLoader = ({ loading, children }) => {
   const [showLoader, setShowLoader] = useState(true);

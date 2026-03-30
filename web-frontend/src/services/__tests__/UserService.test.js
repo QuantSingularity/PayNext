@@ -1,5 +1,5 @@
-import UserService from "../UserService";
 import api from "../api"; // Assuming api.js handles actual HTTP requests
+import UserService from "../UserService";
 
 // Mock the api module
 jest.mock("../api");

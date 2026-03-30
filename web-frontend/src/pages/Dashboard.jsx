@@ -1,51 +1,49 @@
-import React, { useState, useEffect } from "react";
-import { userService, simulateApiCall } from "../services/api";
 import {
-  Container,
-  Grid,
-  Paper,
-  Typography,
+  AccountBalance as AccountBalanceIcon,
+  ArrowDownward as ArrowDownwardIcon,
+  ArrowUpward as ArrowUpwardIcon,
+  AttachMoney as AttachMoneyIcon,
+  CreditCard as CreditCardIcon,
+  History as HistoryIcon,
+  Refresh as RefreshIcon,
+  Send as SendIcon,
+  TrendingUp as TrendingUpIcon,
+} from "@mui/icons-material";
+import {
+  Avatar,
   Box,
   Button,
   Card,
   CardContent,
-  Divider,
-  Avatar,
+  Chip,
+  Container,
+  Grid,
+  IconButton,
   List,
   ListItem,
-  ListItemText,
   ListItemIcon,
-  Chip,
-  IconButton,
-  useTheme,
+  ListItemText,
+  Paper,
+  Typography,
   useMediaQuery,
+  useTheme,
 } from "@mui/material";
-import {
-  AccountBalance as AccountBalanceIcon,
-  CreditCard as CreditCardIcon,
-  Send as SendIcon,
-  History as HistoryIcon,
-  TrendingUp as TrendingUpIcon,
-  MoreVert as MoreVertIcon,
-  ArrowUpward as ArrowUpwardIcon,
-  ArrowDownward as ArrowDownwardIcon,
-  AttachMoney as AttachMoneyIcon,
-  Refresh as RefreshIcon,
-} from "@mui/icons-material";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AnimatedElement,
   StaggeredList,
 } from "../components/AnimationComponents";
+import { simulateApiCall } from "../services/api";
 
 const Dashboard = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const _isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const navigate = useNavigate();
 
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     monthlySpending: 0,
     savedThisMonth: 0,

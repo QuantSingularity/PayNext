@@ -1,30 +1,28 @@
-import React from "react";
 import {
-  Container,
-  Typography,
+  AccountBalance as AccountBalanceIcon,
+  ArrowForward as ArrowForwardIcon,
+  Devices as DevicesIcon,
+  Security as SecurityIcon,
+  Speed as SpeedIcon,
+} from "@mui/icons-material";
+import {
   Box,
-  Grid,
-  Paper,
   Button,
   Card,
   CardContent,
   CardMedia,
-  Divider,
-  useTheme,
+  Container,
+  Grid,
+  Paper,
+  Typography,
   useMediaQuery,
+  useTheme,
 } from "@mui/material";
-import {
-  AccountBalance as AccountBalanceIcon,
-  Security as SecurityIcon,
-  Speed as SpeedIcon,
-  Devices as DevicesIcon,
-  ArrowForward as ArrowForwardIcon,
-} from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 
 const Homepage = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const _isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const navigate = useNavigate();
 
   const features = [

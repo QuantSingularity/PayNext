@@ -1,7 +1,7 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import SendPage from "@/app/send/page";
 import { useSearchParams } from "next/navigation";
+import SendPage from "@/app/send/page";
 
 // Mock dependencies
 jest.mock("next/navigation", () => ({

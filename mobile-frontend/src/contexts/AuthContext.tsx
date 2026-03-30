@@ -1,8 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { apiClient, mockApiClient, useMockData } from "@/lib/api-client";
+import type React from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { apiClient, mockApiClient, useMockData } from "@/lib/api-client";
 
 interface User {
   id: string;
@@ -38,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     };
     initAuth();
-  }, []);
+  }, [refreshUser]);
 
   const refreshUser = async () => {
     try {
@@ -56,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // In development, auto-succeed with mock data
       if (useMockData) {
-        const mockToken = "mock_jwt_token_" + Date.now();
+        const mockToken = `mock_jwt_token_${Date.now()}`;
         apiClient.setToken(mockToken);
         const profileResponse = await mockApiClient.getUserProfile();
         if (profileResponse.success && profileResponse.data) {
@@ -77,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return false;
         }
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Login failed");
       return false;
     }
@@ -98,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         toast.error(response.error?.message || "Registration failed");
         return false;
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Registration failed");
       return false;
     }
@@ -123,7 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         return false;
       }
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   };

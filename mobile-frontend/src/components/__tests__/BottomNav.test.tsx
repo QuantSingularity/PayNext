@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
-import BottomNav from "@/components/BottomNav";
 import { usePathname } from "next/navigation";
+import BottomNav from "@/components/BottomNav";
 
 // Mock next/navigation
 jest.mock("next/navigation", () => ({

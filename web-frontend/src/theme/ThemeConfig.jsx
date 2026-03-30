@@ -1,10 +1,9 @@
-import React from "react";
+import CssBaseline from "@mui/material/CssBaseline";
 import {
-  ThemeProvider,
   createTheme,
   responsiveFontSizes,
+  ThemeProvider,
 } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
 
 // Create a theme instance
 let theme = createTheme({

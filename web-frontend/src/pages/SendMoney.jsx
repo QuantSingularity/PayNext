@@ -1,42 +1,40 @@
-import React, { useState } from "react";
 import {
-  Container,
-  Typography,
-  Box,
-  Grid,
-  Paper,
-  Button,
-  TextField,
-  Stepper,
-  Step,
-  StepLabel,
-  StepContent,
-  Card,
-  CardContent,
-  Radio,
-  RadioGroup,
-  FormControlLabel,
-  FormControl,
-  FormLabel,
-  InputAdornment,
-  CircularProgress,
-  Alert,
-  Divider,
-  Avatar,
-  useTheme,
-} from "@mui/material";
-import {
-  Person as PersonIcon,
+  AccountBalance as AccountBalanceIcon,
+  Check as CheckIcon,
+  CreditCard as CreditCardIcon,
   Search as SearchIcon,
   Send as SendIcon,
-  Check as CheckIcon,
-  AccountBalance as AccountBalanceIcon,
-  CreditCard as CreditCardIcon,
-  AttachMoney as AttachMoneyIcon,
 } from "@mui/icons-material";
+import {
+  Alert,
+  Avatar,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CircularProgress,
+  Container,
+  Divider,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  Grid,
+  InputAdornment,
+  Paper,
+  Radio,
+  RadioGroup,
+  Step,
+  StepContent,
+  StepLabel,
+  Stepper,
+  TextField,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { paymentService, simulateApiCall } from "../services/api";
 import { AnimatedElement } from "../components/AnimationComponents";
+import { simulateApiCall } from "../services/api";
 
 const SendMoney = () => {
   const theme = useTheme();
@@ -54,7 +52,7 @@ const SendMoney = () => {
     note: "",
   });
 
-  const [searchResults, setSearchResults] = useState([
+  const [searchResults, _setSearchResults] = useState([
     {
       id: "user1",
       name: "John Smith",
@@ -75,7 +73,7 @@ const SendMoney = () => {
     },
   ]);
 
-  const [paymentMethods, setPaymentMethods] = useState([
+  const [paymentMethods, _setPaymentMethods] = useState([
     {
       id: "card1",
       type: "card",
@@ -102,7 +100,7 @@ const SendMoney = () => {
         return;
       }
 
-      if (isNaN(formData.amount) || parseFloat(formData.amount) <= 0) {
+      if (Number.isNaN(formData.amount) || parseFloat(formData.amount) <= 0) {
         setError("Please enter a valid amount");
         return;
       }
@@ -131,7 +129,7 @@ const SendMoney = () => {
     });
   };
 
-  const handlePaymentMethodSelect = (method) => {
+  const _handlePaymentMethodSelect = (method) => {
     setFormData({
       ...formData,
       paymentMethod: method,
@@ -151,7 +149,7 @@ const SendMoney = () => {
 
       setSuccess(true);
       setLoading(false);
-    } catch (err) {
+    } catch (_err) {
       setError("Failed to process payment. Please try again.");
       setLoading(false);
     }
@@ -580,7 +578,7 @@ const SendMoney = () => {
             }}
           >
             <Stepper activeStep={activeStep} orientation="vertical">
-              {steps.map((step, index) => (
+              {steps.map((step, _index) => (
                 <Step key={step.label}>
                   <StepLabel>
                     <Typography

@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import HomePage from "@/app/page";
 import { useAuth } from "@/contexts/AuthContext";
-import { mockApiClient } from "@/lib/api-client";
 
 // Mock dependencies
 jest.mock("@/contexts/AuthContext");

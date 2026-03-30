@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import {
   Html5QrcodeScanner,
   Html5QrcodeScanType,
-  QrcodeErrorCallback,
-  QrcodeSuccessCallback,
+  type QrcodeErrorCallback,
+  type QrcodeSuccessCallback,
 } from "html5-qrcode";
-import { toast } from "sonner";
+import { useEffect, useRef, useState } from "react";
 
 interface QrScannerProps {
   onScanSuccess: (decodedText: string, decodedResult: any) => void;

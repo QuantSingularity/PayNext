@@ -1,37 +1,36 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Landmark,
+  QrCode,
+  Send,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import QrScanner from "@/components/QrScanner";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  ArrowUpRight,
-  ArrowDownLeft,
-  QrCode,
-  Send,
-  Landmark,
-} from "lucide-react";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose,
 } from "@/components/ui/dialog";
-import QrScanner from "@/components/QrScanner";
-import { toast } from "sonner";
-import { mockApiClient, useMockData, apiClient } from "@/lib/api-client";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
+import { apiClient, mockApiClient, useMockData } from "@/lib/api-client";
 
 interface Transaction {
   id: string;
@@ -134,7 +133,7 @@ export default function HomePage() {
     }
   };
 
-  const handleScanFailure = (error: any) => {
+  const handleScanFailure = (_error: any) => {
     // Silently handle scan failures - they're expected during scanning
   };
 

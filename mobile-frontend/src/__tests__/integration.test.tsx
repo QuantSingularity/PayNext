@@ -3,8 +3,6 @@
  * Tests core user flows and component interactions
  */
 
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { mockApiClient } from "@/lib/api-client";
 
 // Mock next/navigation

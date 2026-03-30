@@ -1,25 +1,24 @@
-import React from "react";
+import {
+  Facebook as FacebookIcon,
+  GitHub as GitHubIcon,
+  Instagram as InstagramIcon,
+  LinkedIn as LinkedInIcon,
+  Twitter as TwitterIcon,
+} from "@mui/icons-material";
 import {
   Box,
   Container,
-  Typography,
-  Link,
   Grid,
   IconButton,
-  useTheme,
+  Link,
+  Typography,
   useMediaQuery,
+  useTheme,
 } from "@mui/material";
-import {
-  Facebook as FacebookIcon,
-  Twitter as TwitterIcon,
-  Instagram as InstagramIcon,
-  LinkedIn as LinkedInIcon,
-  GitHub as GitHubIcon,
-} from "@mui/icons-material";
 
 const Footer = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const _isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const footerLinks = [
     {
