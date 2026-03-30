@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 
 class AnomalyDetector:
 
-    def __init__(self, contamination: Any = 0.01, random_state: Any = 42) -> Any:
+    def __init__(self, contamination: Any = 0.01, random_state: Any = 42) -> None:
         self.model = IsolationForest(
             contamination=contamination, random_state=random_state
         )

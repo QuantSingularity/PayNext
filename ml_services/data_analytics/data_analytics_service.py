@@ -9,7 +9,7 @@ logger = get_logger(__name__)
 
 class DataAnalyticsService:
 
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self.user_scaler = None
         self.kmeans_model = None
         self.segment_features = [
