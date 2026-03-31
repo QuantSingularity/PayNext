@@ -1,8 +1,10 @@
 import logging
 import os
+from contextlib import asynccontextmanager
 
 import joblib
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 logging.basicConfig(
@@ -11,28 +13,41 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Transaction Categorization API")
-
-# Define the path to the models relative to the current file
-model_dir = os.path.join(
-    os.path.dirname(__file__), ".."
-)  # Go up one level to ml_services
-category_model_path = os.path.join(model_dir, "category_model.joblib")
-category_vectorizer_path = os.path.join(model_dir, "category_vectorizer.joblib")
+model_dir = os.path.join(os.path.dirname(__file__), "..")
 
 category_model = None
 category_vectorizer = None
 
-try:
-    category_model = joblib.load(category_model_path)
-    category_vectorizer = joblib.load(category_vectorizer_path)
-    logger.info("Categorization Model and Vectorizer loaded successfully.")
-except FileNotFoundError:
-    logger.info(
-        f"Categorization model or vectorizer file not found at {model_dir}. Please train the model first."
-    )
-except Exception as e:
-    logger.info(f"Error loading Categorization Model or Vectorizer: {e}")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global category_model, category_vectorizer
+    try:
+        category_model = joblib.load(os.path.join(model_dir, "category_model.joblib"))
+        category_vectorizer = joblib.load(
+            os.path.join(model_dir, "category_vectorizer.joblib")
+        )
+        logger.info("Categorization Model and Vectorizer loaded successfully.")
+    except FileNotFoundError:
+        logger.error(
+            f"Categorization model or vectorizer file not found at {model_dir}. Please train the model first."
+        )
+    except Exception as e:
+        logger.error(f"Error loading Categorization Model or Vectorizer: {e}")
+    yield
+
+
+app = FastAPI(
+    title="Transaction Categorization API", version="1.0.0", lifespan=lifespan
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class TransactionCategorizationInput(BaseModel):
@@ -40,33 +55,42 @@ class TransactionCategorizationInput(BaseModel):
     description: str
 
 
+class CategorizationOutput(BaseModel):
+    merchant: str
+    description: str
+    predicted_category: str
+    prediction_probability: float
+
+
 @app.get("/health")
 async def health_check():
     return {"status": "ok", "model_loaded": category_model is not None}
 
 
-@app.post("/categorize_transaction/")
+@app.post("/categorize_transaction/", response_model=CategorizationOutput)
 async def categorize_transaction(transaction: TransactionCategorizationInput):
     if category_model is None or category_vectorizer is None:
         raise HTTPException(
-            status_code=500,
+            status_code=503,
             detail="Categorization model not loaded. Please train the model.",
         )
-
     try:
         text_features = [f"{transaction.merchant} {transaction.description}"]
         text_features_vec = category_vectorizer.transform(text_features)
-
         prediction = category_model.predict(text_features_vec)[0]
-        prediction_proba = category_model.predict_proba(
-            text_features_vec
-        ).max()  # Probability of the predicted class
-
-        return {
-            "merchant": transaction.merchant,
-            "description": transaction.description,
-            "predicted_category": prediction,
-            "prediction_probability": round(prediction_proba, 4),
-        }
+        prediction_proba = float(category_model.predict_proba(text_features_vec).max())
+        return CategorizationOutput(
+            merchant=transaction.merchant,
+            description=transaction.description,
+            predicted_category=prediction,
+            prediction_probability=round(prediction_proba, 4),
+        )
     except Exception as e:
+        logger.error(f"Error during categorization: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("categorization_api:app", host="0.0.0.0", port=8005, reload=False)

@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -76,9 +77,8 @@ def generate_synthetic_data(num_transactions: Any = 10000) -> Any:
 
 if __name__ == "__main__":
     df = generate_synthetic_data(num_transactions=50000)
-    df.to_csv("PayNext/ml_services/synthetic_transactions.csv", index=False)
-    logger.info(
-        "Synthetic transaction data generated and saved to PayNext/ml_services/synthetic_transactions.csv"
-    )
+    output_path = os.path.join(os.path.dirname(__file__), "synthetic_transactions.csv")
+    df.to_csv(output_path, index=False)
+    logger.info(f"Synthetic transaction data generated and saved to {output_path}")
     logger.info(df.head())
     logger.info(df["is_fraud"].value_counts())

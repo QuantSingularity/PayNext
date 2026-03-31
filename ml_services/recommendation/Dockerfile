@@ -1,0 +1,15 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY common/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY common/ ./common/
+COPY recommendation/ ./recommendation/
+
+WORKDIR /app/recommendation
+
+EXPOSE 8004
+
+CMD ["uvicorn", "recommendation_api:app", "--host", "0.0.0.0", "--port", "8004"]

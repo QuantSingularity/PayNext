@@ -49,7 +49,7 @@ class DataAnalyticsService:
                 user_data[self.segment_features]
             )
         scaled_df = pd.DataFrame(
-            scaled_features, columns=self.segment_features, index=user_data["user_id"]
+            scaled_features, columns=self.segment_features, index=user_data.index
         )
         return (scaled_df, user_data[["user_id"]])
 
@@ -86,7 +86,7 @@ class DataAnalyticsService:
         elif time_granularity == "weekly":
             resampled_df = df_copy.resample("W")
         elif time_granularity == "monthly":
-            resampled_df = df_copy.resample("M")
+            resampled_df = df_copy.resample("ME")
         else:
             raise ValueError("time_granularity must be 'daily', 'weekly', or 'monthly'")
         trends = resampled_df.agg(
@@ -129,18 +129,17 @@ class DataAnalyticsService:
 
 
 if __name__ == "__main__":
-    try:
-        from ..anomaly_detection.anomaly_data_generator import (
-            generate_synthetic_transaction_data,
-        )
-    except ImportError:
-        import os
-        import sys
+    import os
+    import sys
 
-        sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-        from anomaly_detection.anomaly_data_generator import (
-            generate_synthetic_transaction_data,
-        )
+    sys.path.insert(
+        0,
+        os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "anomaly_detection")
+        ),
+    )
+    from anomaly_data_generator import generate_synthetic_transaction_data
+
     logger.info("Generating synthetic transaction data for analytics...")
     synthetic_transactions_df = generate_synthetic_transaction_data(
         num_transactions=100000, num_users=500, anomaly_ratio=0.0
@@ -152,10 +151,8 @@ if __name__ == "__main__":
         synthetic_transactions_df, n_clusters=4
     )
     logger.info("User Segmentation trained and segments assigned.")
-    logger.info("User segments head:")
-    logger.info(user_segments_df.head())
-    logger.info("Segment distribution:")
-    logger.info(user_segments_df["segment"].value_counts())
+    logger.info(f"User segments head:\n{user_segments_df.head()}")
+    logger.info(f"Segment distribution:\n{user_segments_df['segment'].value_counts()}")
     analytics_service.save_models("analytics_models.joblib")
     loaded_analytics_service = DataAnalyticsService.load_models(
         "analytics_models.joblib"
@@ -164,23 +161,16 @@ if __name__ == "__main__":
     predicted_segments = loaded_analytics_service.predict_user_segment(
         synthetic_transactions_df.sample(100)
     )
-    logger.info("\nPredicted segments for a sample of users:")
-    logger.info(predicted_segments.head())
+    logger.info(
+        f"\nPredicted segments for a sample of users:\n{predicted_segments.head()}"
+    )
     logger.info("\nPerforming Daily Transaction Trend Analysis...")
     daily_trends = analytics_service.analyze_transaction_trends(
         synthetic_transactions_df, time_granularity="daily"
     )
-    logger.info("Daily Trends head:")
-    logger.info(daily_trends.head())
-    logger.info("\nPerforming Monthly Transaction Trend Analysis...")
-    monthly_trends = analytics_service.analyze_transaction_trends(
-        synthetic_transactions_df, time_granularity="monthly"
-    )
-    logger.info("Monthly Trends head:")
-    logger.info(monthly_trends.head())
+    logger.info(f"Daily Trends head:\n{daily_trends.head()}")
     logger.info("\nPerforming Geospatial Pattern Analysis...")
     geospatial_summary = analytics_service.analyze_geospatial_patterns(
         synthetic_transactions_df
     )
-    logger.info("Geospatial Summary head:")
-    logger.info(geospatial_summary.head())
+    logger.info(f"Geospatial Summary head:\n{geospatial_summary.head()}")

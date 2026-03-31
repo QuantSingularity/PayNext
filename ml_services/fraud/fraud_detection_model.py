@@ -61,13 +61,11 @@ def train_fraud_model(
     )
     df.fillna(0, inplace=True)
     categorical_cols = ["location", "merchant", "transaction_type", "user_id"]
-    encoders = {}
+    model_dir = os.path.join(os.path.dirname(__file__), "..")
     for col in categorical_cols:
         if col in df.columns:
             le = LabelEncoder()
             df[col] = le.fit_transform(np.array(df[col]))
-            encoders[col] = le
-            model_dir = os.path.join(os.path.dirname(__file__), "..")
             joblib.dump(le, os.path.join(model_dir, f"{col}_encoder.joblib"))
     features = [
         "transaction_amount",
@@ -89,7 +87,6 @@ def train_fraud_model(
     y = df["is_fraud"]
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
-    model_dir = os.path.join(os.path.dirname(__file__), "..")
     joblib.dump(scaler, os.path.join(model_dir, "fraud_scaler.joblib"))
     X = pd.DataFrame(X_scaled, columns=features)
     X_train, X_test, y_train, y_test = train_test_split(
@@ -107,36 +104,31 @@ def train_fraud_model(
     y_proba_rf = model_rf.predict_proba(X_test)[:, 1]
     logger.info("\nRandomForest Fraud Detection Model Report:")
     logger.info(classification_report(y_test, y_pred_rf))
-    logger.info("Confusion Matrix:\n", confusion_matrix(y_test, y_pred_rf))
-    logger.info("ROC AUC Score:", roc_auc_score(y_test, y_proba_rf))
+    logger.info(f"Confusion Matrix:\n{confusion_matrix(y_test, y_pred_rf)}")
+    logger.info(f"ROC AUC Score: {roc_auc_score(y_test, y_proba_rf):.4f}")
     model_if = IsolationForest(
-        random_state=42, contamination=y_train.sum() / len(y_train)
+        random_state=42, contamination=float(y_train.sum()) / len(y_train)
     )
     model_if.fit(X_train)
     y_pred_if = model_if.predict(X_test)
     y_pred_if_binary = np.where(y_pred_if == -1, 1, 0)
     logger.info("\nIsolation Forest Anomaly Detection Report:")
     logger.info(classification_report(y_test, y_pred_if_binary))
-    logger.info("Confusion Matrix:\n", confusion_matrix(y_test, y_pred_if_binary))
+    logger.info(f"Confusion Matrix:\n{confusion_matrix(y_test, y_pred_if_binary)}")
     y_proba_if = -model_if.decision_function(X_test)
-    logger.info("ROC AUC Score:", roc_auc_score(y_test, y_proba_if))
+    logger.info(f"ROC AUC Score: {roc_auc_score(y_test, y_proba_if):.4f}")
     joblib.dump(model_rf, os.path.join(model_dir, "fraud_model.joblib"))
     joblib.dump(
         model_if, os.path.join(model_dir, "fraud_isolation_forest_model.joblib")
     )
-    logger.info(
-        "Fraud detection RandomForest model trained and saved to PayNext/ml_services/fraud_model.joblib"
-    )
-    logger.info(
-        "Fraud detection Isolation Forest model trained and saved to PayNext/ml_services/fraud_isolation_forest_model.joblib"
-    )
     joblib.dump(features, os.path.join(model_dir, "fraud_model_features.joblib"))
+    logger.info("Fraud detection RandomForest and Isolation Forest models saved.")
     input_dim = X_train.shape[1]
-    encoding_dim = int(input_dim / 2)
+    encoding_dim = max(1, int(input_dim / 2))
     input_layer = Input(shape=(input_dim,))
-    encoder = Dense(encoding_dim, activation="relu")(input_layer)
-    decoder = Dense(input_dim, activation="sigmoid")(encoder)
-    autoencoder = Model(inputs=input_layer, outputs=decoder)
+    encoded = Dense(encoding_dim, activation="relu")(input_layer)
+    decoded = Dense(input_dim, activation="sigmoid")(encoded)
+    autoencoder = Model(inputs=input_layer, outputs=decoded)
     autoencoder.compile(optimizer=Adam(learning_rate=0.001), loss="mean_squared_error")
     logger.info("\nTraining Autoencoder for Anomaly Detection...")
     autoencoder.fit(
@@ -149,12 +141,9 @@ def train_fraud_model(
         verbose=0,
     )
     logger.info("Autoencoder training complete.")
-    reconstructions = autoencoder.predict(X)
-    np.mean(np.power(X - reconstructions, 2), axis=1)
-    joblib.dump(autoencoder, os.path.join(model_dir, "fraud_autoencoder_model.joblib"))
-    logger.info(
-        "Fraud detection Autoencoder model trained and saved to PayNext/ml_services/fraud_autoencoder_model.joblib"
-    )
+    ae_save_path = os.path.join(model_dir, "fraud_autoencoder_model.keras")
+    autoencoder.save(ae_save_path)
+    logger.info(f"Fraud detection Autoencoder model saved to {ae_save_path}")
 
 
 if __name__ == "__main__":

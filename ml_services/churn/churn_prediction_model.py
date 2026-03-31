@@ -17,9 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def train_churn_model(
-    data_path: str = os.path.join(
-        os.path.dirname(__file__), "..", "synthetic_churn_data.csv"
-    )
+    data_path: str = os.path.join(os.path.dirname(__file__), "synthetic_churn_data.csv")
 ) -> Any:
     """
     Train a LightGBM model to predict user churn using synthetic churn dataset.

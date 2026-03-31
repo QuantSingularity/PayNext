@@ -1,10 +1,12 @@
 import logging
 import os
+from contextlib import asynccontextmanager
 from typing import Any, Dict
 
 import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 logging.basicConfig(
@@ -13,41 +15,66 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Recommendation API")
 model_dir = os.path.join(os.path.dirname(__file__), "..")
-kmeans_model_path = os.path.join(model_dir, "recommendation_kmeans_model.joblib")
-scaler_path = os.path.join(model_dir, "recommendation_scaler.joblib")
-user_spending_clusters_path = os.path.join(model_dir, "user_spending_clusters.csv")
-recommendation_features_path = os.path.join(model_dir, "recommendation_features.joblib")
+
 kmeans_model = None
 scaler = None
 user_spending_clusters = None
 recommendation_features = None
 cluster_characteristics: Dict = {}
-try:
-    kmeans_model = joblib.load(kmeans_model_path)
-    scaler = joblib.load(scaler_path)
-    user_spending_clusters = pd.read_csv(user_spending_clusters_path)
-    recommendation_features = joblib.load(recommendation_features_path)
-    logger.info("Recommendation Model, Scaler, and Data loaded successfully.")
 
-    def get_cluster_characteristics(df: Any) -> Any:
-        if df is None:
-            return {}
-        cluster_cols = [col for col in df.columns if col not in ["user_id", "cluster"]]
-        return df.groupby("cluster")[cluster_cols].mean().to_dict("index")
 
-    cluster_characteristics = get_cluster_characteristics(user_spending_clusters)
-except FileNotFoundError as e:
-    logger.info(
-        f"Recommendation model or data file not found: {e}. Please train the model first."
-    )
-except Exception as e:
-    logger.info(f"Error loading Recommendation Model components: {e}")
+def get_cluster_characteristics(df: Any) -> Any:
+    if df is None:
+        return {}
+    cluster_cols = [col for col in df.columns if col not in ["user_id", "cluster"]]
+    return df.groupby("cluster")[cluster_cols].mean().to_dict("index")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global kmeans_model, scaler, user_spending_clusters, recommendation_features, cluster_characteristics
+    try:
+        kmeans_model = joblib.load(
+            os.path.join(model_dir, "recommendation_kmeans_model.joblib")
+        )
+        scaler = joblib.load(os.path.join(model_dir, "recommendation_scaler.joblib"))
+        user_spending_clusters = pd.read_csv(
+            os.path.join(model_dir, "user_spending_clusters.csv")
+        )
+        recommendation_features = joblib.load(
+            os.path.join(model_dir, "recommendation_features.joblib")
+        )
+        cluster_characteristics = get_cluster_characteristics(user_spending_clusters)
+        logger.info("Recommendation Model, Scaler, and Data loaded successfully.")
+    except FileNotFoundError as e:
+        logger.error(
+            f"Recommendation model or data file not found: {e}. Please train the model first."
+        )
+    except Exception as e:
+        logger.error(f"Error loading Recommendation Model components: {e}")
+    yield
+
+
+app = FastAPI(title="Recommendation API", version="1.0.0", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class UserRecommendationInput(BaseModel):
     user_id: str
+
+
+class RecommendationOutput(BaseModel):
+    user_id: str
+    cluster: int
+    recommendations: list
 
 
 @app.get("/health")
@@ -55,7 +82,7 @@ async def health_check():
     return {"status": "ok", "model_loaded": kmeans_model is not None}
 
 
-@app.post("/get_recommendations/")
+@app.post("/get_recommendations/", response_model=RecommendationOutput)
 async def get_recommendations(user_input: UserRecommendationInput):
     if (
         kmeans_model is None
@@ -63,7 +90,7 @@ async def get_recommendations(user_input: UserRecommendationInput):
         or user_spending_clusters is None
     ):
         raise HTTPException(
-            status_code=500,
+            status_code=503,
             detail="Recommendation model or data not loaded. Please train the model.",
         )
     user_id = user_input.user_id
@@ -73,7 +100,7 @@ async def get_recommendations(user_input: UserRecommendationInput):
             status_code=404,
             detail="User not found or no spending data available for recommendations.",
         )
-    user_cluster = user_data["cluster"].iloc[0]
+    user_cluster = int(user_data["cluster"].iloc[0])
     user_metrics = user_data.iloc[0]
     recommendations = []
     cluster_avg = cluster_characteristics.get(user_cluster, {})
@@ -112,8 +139,14 @@ async def get_recommendations(user_input: UserRecommendationInput):
             recommendations.append(
                 "Review your monthly statements to find opportunities for savings."
             )
-    return {
-        "user_id": user_id,
-        "cluster": int(user_cluster),
-        "recommendations": recommendations,
-    }
+    return RecommendationOutput(
+        user_id=user_id,
+        cluster=user_cluster,
+        recommendations=recommendations,
+    )
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("recommendation_api:app", host="0.0.0.0", port=8004, reload=False)
