@@ -1,14 +1,19 @@
+import logging
 import os
 from typing import Any
 
 import joblib
 import pandas as pd
-from core.logging import get_logger
 from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import StandardScaler
 
-logger = get_logger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
+
 NUM_CLUSTERS = 7
 
 

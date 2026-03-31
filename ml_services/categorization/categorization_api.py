@@ -1,11 +1,15 @@
+import logging
 import os
 
 import joblib
-from core.logging import get_logger
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-logger = get_logger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Transaction Categorization API")
 

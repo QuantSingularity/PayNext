@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import datetime
 from typing import Any
@@ -5,11 +6,15 @@ from typing import Any
 import joblib
 import numpy as np
 import pandas as pd
-from core.logging import get_logger
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-logger = get_logger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
+
 app = FastAPI(title="Fraud Detection API")
 model_dir = os.path.join(os.path.dirname(__file__), "..")
 fraud_model_rf_path = os.path.join(model_dir, "fraud_model.joblib")

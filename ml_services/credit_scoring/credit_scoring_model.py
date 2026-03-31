@@ -1,15 +1,19 @@
+import logging
 import os
 from typing import Any
 
 import joblib
 import pandas as pd
-from core.logging import get_logger
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-logger = get_logger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 
 def train_credit_scoring_model(

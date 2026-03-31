@@ -1,20 +1,22 @@
+import logging
 import os
 from datetime import datetime
 from typing import List
 
 import pandas as pd
-from core.logging import get_logger
+from data_analytics_service import DataAnalyticsService
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from ..anomaly_detection.anomaly_data_generator import (
     generate_synthetic_transaction_data,
-)  # For initial data
+)
 
-# Assuming data_analytics_service.py is in the same directory or accessible
-from .data_analytics.data_analytics_service import DataAnalyticsService
-
-logger = get_logger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Data Analytics API")
 

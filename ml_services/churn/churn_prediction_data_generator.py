@@ -1,11 +1,15 @@
+import logging
 import os
 from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
-from core.logging import get_logger
 
-logger = get_logger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 
 def generate_churn_data(num_users: int = 1000, num_months: int = 12) -> pd.DataFrame:

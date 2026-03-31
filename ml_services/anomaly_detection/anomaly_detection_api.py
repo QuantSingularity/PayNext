@@ -1,15 +1,17 @@
+import logging
 import os
 from datetime import datetime
 
 import pandas as pd
-from core.logging import get_logger
+from anomaly_detection_model import AnomalyDetector
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-# Assuming anomaly_detection_model.py is in the same directory or accessible
-from .anomaly_detection.anomaly_detection_model import AnomalyDetector
-
-logger = get_logger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Anomaly Detection API")
 
