@@ -1,9 +1,10 @@
 from typing import Any
+
 import joblib
 import pandas as pd
+from core.logging import get_logger
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
-from core.logging import get_logger
 
 logger = get_logger(__name__)
 

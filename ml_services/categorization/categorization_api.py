@@ -1,10 +1,9 @@
 import os
 
 import joblib
+from core.logging import get_logger
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-
-from core.logging import get_logger
 
 logger = get_logger(__name__)
 

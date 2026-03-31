@@ -1,12 +1,13 @@
-from typing import Any
 import os
 from datetime import datetime
+from typing import Any
+
 import joblib
 import numpy as np
 import pandas as pd
+from core.logging import get_logger
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from core.logging import get_logger
 
 logger = get_logger(__name__)
 app = FastAPI(title="Fraud Detection API")

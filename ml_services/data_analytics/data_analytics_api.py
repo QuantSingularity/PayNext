@@ -3,17 +3,16 @@ from datetime import datetime
 from typing import List
 
 import pandas as pd
+from core.logging import get_logger
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from ..anomaly_detection.anomaly_data_generator import (  # For initial data
+from ..anomaly_detection.anomaly_data_generator import (
     generate_synthetic_transaction_data,
-)
+)  # For initial data
 
 # Assuming data_analytics_service.py is in the same directory or accessible
 from .data_analytics.data_analytics_service import DataAnalyticsService
-
-from core.logging import get_logger
 
 logger = get_logger(__name__)
 

@@ -1,11 +1,12 @@
-from typing import Any
 import os
+from typing import Any
+
 import joblib
 import pandas as pd
+from core.logging import get_logger
 from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import StandardScaler
-from core.logging import get_logger
 
 logger = get_logger(__name__)
 NUM_CLUSTERS = 7

@@ -1,11 +1,12 @@
-from typing import Any
 from datetime import datetime
+from typing import Any
+
 import joblib
 import numpy as np
 import pandas as pd
+from core.logging import get_logger
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import LabelEncoder, StandardScaler
-from core.logging import get_logger
 
 logger = get_logger(__name__)
 

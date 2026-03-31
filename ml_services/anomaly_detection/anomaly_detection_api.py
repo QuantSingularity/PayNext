@@ -2,13 +2,12 @@ import os
 from datetime import datetime
 
 import pandas as pd
+from core.logging import get_logger
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 # Assuming anomaly_detection_model.py is in the same directory or accessible
 from .anomaly_detection.anomaly_detection_model import AnomalyDetector
-
-from core.logging import get_logger
 
 logger = get_logger(__name__)
 

@@ -1,8 +1,10 @@
-from typing import Any
 import os
+from typing import Any
+
 import joblib
 import numpy as np
 import pandas as pd
+from core.logging import get_logger
 from sklearn.ensemble import IsolationForest, RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
 from sklearn.model_selection import train_test_split
@@ -10,7 +12,6 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from tensorflow.keras.layers import Dense, Input
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
-from core.logging import get_logger
 
 logger = get_logger(__name__)
 
