@@ -1,11 +1,15 @@
-# Use a lightweight base image with OpenJDK
-FROM openjdk:17-jdk-alpine
+FROM eclipse-temurin:17-jdk-alpine AS builder
+WORKDIR /build
+COPY target/user-service-1.0.0.jar app.jar
+RUN java -Djarmode=layertools -jar app.jar extract
 
-# Copy the built JAR file from the host into the Docker image
-COPY target/user-service-1.0.0.jar ./user-service.jar
-
-# Expose the User Service port
+FROM eclipse-temurin:17-jre-alpine
+RUN addgroup -S spring && adduser -S spring -G spring
+USER spring:spring
+WORKDIR /app
+COPY --from=builder /build/dependencies/ ./
+COPY --from=builder /build/spring-boot-loader/ ./
+COPY --from=builder /build/snapshot-dependencies/ ./
+COPY --from=builder /build/application/ ./
 EXPOSE 8003
-
-# Define the entrypoint to run the User Service
-ENTRYPOINT ["java", "-jar", "user-service.jar"]
+ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]

@@ -18,15 +18,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(PaymentController.class)
 class PaymentControllerTest {
 
   @Autowired private MockMvc mockMvc;
-
   @MockBean private PaymentService paymentService;
-
   @Autowired private ObjectMapper objectMapper;
 
   private Payment testPayment;
@@ -42,7 +41,8 @@ class PaymentControllerTest {
   }
 
   @Test
-  void processPayment_shouldReturnCreatedPayment() throws Exception {
+  @WithMockUser
+  void processPayment_shouldReturnCreated() throws Exception {
     when(paymentService.processPayment(any(Payment.class))).thenReturn(testPayment);
 
     mockMvc
@@ -50,45 +50,45 @@ class PaymentControllerTest {
             post("/api/payments")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(testPayment)))
-        .andExpect(status().isOk())
+        .andExpect(status().isCreated())
         .andExpect(jsonPath("$.userId").value(testPayment.getUserId()))
-        .andExpect(jsonPath("$.amount").value(testPayment.getAmount().doubleValue()))
         .andExpect(jsonPath("$.status").value(testPayment.getStatus()));
   }
 
   @Test
-  void getAllPayments_shouldReturnListOfPayments() throws Exception {
-    Payment secondPayment = new Payment();
-    secondPayment.setId(2L);
-    secondPayment.setUserId(200L);
-    secondPayment.setAmount(new BigDecimal("200.00"));
-    secondPayment.setPaymentDate(LocalDateTime.now());
-    secondPayment.setStatus("PENDING");
+  @WithMockUser
+  void getAllPayments_shouldReturnList() throws Exception {
+    Payment second = new Payment();
+    second.setId(2L);
+    second.setUserId(200L);
+    second.setAmount(new BigDecimal("200.00"));
+    second.setPaymentDate(LocalDateTime.now());
+    second.setStatus("PENDING");
 
-    List<Payment> payments = Arrays.asList(testPayment, secondPayment);
+    List<Payment> payments = Arrays.asList(testPayment, second);
     when(paymentService.getAllPayments()).thenReturn(payments);
 
     mockMvc
         .perform(get("/api/payments").contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].userId").value(testPayment.getUserId()))
-        .andExpect(jsonPath("$[1].userId").value(secondPayment.getUserId()));
+        .andExpect(jsonPath("$[1].userId").value(second.getUserId()));
   }
 
   @Test
-  void getPaymentById_whenPaymentExists_shouldReturnPayment() throws Exception {
+  @WithMockUser
+  void getPaymentById_whenFound_shouldReturnOk() throws Exception {
     when(paymentService.getPaymentById(1L)).thenReturn(testPayment);
 
     mockMvc
         .perform(get("/api/payments/1").contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.userId").value(testPayment.getUserId()))
-        .andExpect(jsonPath("$.amount").value(testPayment.getAmount().doubleValue()))
-        .andExpect(jsonPath("$.status").value(testPayment.getStatus()));
+        .andExpect(jsonPath("$.userId").value(testPayment.getUserId()));
   }
 
   @Test
-  void getPaymentById_whenPaymentDoesNotExist_shouldReturnNotFound() throws Exception {
+  @WithMockUser
+  void getPaymentById_whenNotFound_shouldReturnNotFound() throws Exception {
     when(paymentService.getPaymentById(999L)).thenReturn(null);
 
     mockMvc

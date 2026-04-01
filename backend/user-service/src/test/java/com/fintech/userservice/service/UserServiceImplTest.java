@@ -19,7 +19,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 class UserServiceImplTest {
 
   @Mock private UserRepository userRepository;
-
   @Mock private PasswordEncoder passwordEncoder;
 
   @InjectMocks private UserServiceImpl userService;
@@ -31,60 +30,71 @@ class UserServiceImplTest {
     testUser = new User();
     testUser.setUsername("testuser");
     testUser.setEmail("test@example.com");
-    testUser.setPassword("plainPassword");
+    testUser.setPassword("Password1@");
+    testUser.setRole("ROLE_USER");
   }
 
   @Test
-  void saveUser_shouldEncodePasswordAndSaveUser() {
-    String encodedPassword = "encodedPassword";
-    when(passwordEncoder.encode(anyString())).thenReturn(encodedPassword);
-    when(userRepository.save(any(User.class)))
-        .thenAnswer(
-            invocation -> {
-              User savedUser = invocation.getArgument(0);
-              savedUser.setId(1L); // Simulate saving with ID
-              return savedUser;
-            });
+  void saveUser_shouldEncodePasswordAndSave() {
+    when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
+    when(userRepository.save(any(User.class))).thenAnswer(inv -> {
+      User u = inv.getArgument(0);
+      u.setId(1L);
+      return u;
+    });
 
-    User savedUser = userService.saveUser(testUser);
+    User saved = userService.saveUser(testUser);
 
-    assertNotNull(savedUser);
-    assertEquals(testUser.getUsername(), savedUser.getUsername());
-    assertEquals(encodedPassword, savedUser.getPassword());
-    verify(passwordEncoder, times(1)).encode("plainPassword");
-    verify(userRepository, times(1)).save(testUser);
+    assertNotNull(saved);
+    assertEquals("encodedPassword", saved.getPassword());
+    assertEquals("ROLE_USER", saved.getRole());
+    verify(passwordEncoder).encode("Password1@");
+    verify(userRepository).save(testUser);
   }
 
   @Test
-  void saveUser_withNullPassword_shouldNotEncodePassword() {
+  void saveUser_withNullPassword_shouldThrowIllegalArgumentException() {
     testUser.setPassword(null);
-    when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-    User savedUser = userService.saveUser(testUser);
+    assertThrows(IllegalArgumentException.class, () -> userService.saveUser(testUser));
+    verify(userRepository, never()).save(any());
+  }
 
-    assertNotNull(savedUser);
-    verify(passwordEncoder, never()).encode(anyString());
-    verify(userRepository, times(1)).save(testUser);
+  @Test
+  void saveUser_withBlankPassword_shouldThrowIllegalArgumentException() {
+    testUser.setPassword("   ");
+
+    assertThrows(IllegalArgumentException.class, () -> userService.saveUser(testUser));
+    verify(userRepository, never()).save(any());
+  }
+
+  @Test
+  void saveUser_withNullRole_shouldDefaultToRoleUser() {
+    testUser.setRole(null);
+    when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
+    when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    User saved = userService.saveUser(testUser);
+
+    assertEquals("ROLE_USER", saved.getRole());
   }
 
   @Test
   void findByUsername_shouldReturnUser() {
-    when(userRepository.findByUsername(testUser.getUsername())).thenReturn(testUser);
+    when(userRepository.findByUsername("testuser")).thenReturn(testUser);
 
-    User foundUser = userService.findByUsername(testUser.getUsername());
+    User found = userService.findByUsername("testuser");
 
-    assertNotNull(foundUser);
-    assertEquals(testUser.getUsername(), foundUser.getUsername());
-    verify(userRepository, times(1)).findByUsername(testUser.getUsername());
+    assertNotNull(found);
+    assertEquals("testuser", found.getUsername());
+    verify(userRepository).findByUsername("testuser");
   }
 
   @Test
-  void findByUsername_whenUserDoesNotExist_shouldReturnNull() {
+  void findByUsername_whenNotFound_shouldReturnNull() {
     when(userRepository.findByUsername(anyString())).thenReturn(null);
 
-    User foundUser = userService.findByUsername("nonexistentuser");
-
-    assertNull(foundUser);
-    verify(userRepository, times(1)).findByUsername("nonexistentuser");
+    assertNull(userService.findByUsername("ghost"));
+    verify(userRepository).findByUsername("ghost");
   }
 }

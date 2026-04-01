@@ -1,2 +1,5 @@
-*
-!target/payment-service-1.0.0.jar
+**/*.log
+**/*.md
+.git
+.gitignore
+src/test

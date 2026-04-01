@@ -7,9 +7,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fintech.common.util.JwtUtil;
 import com.fintech.userservice.model.User;
 import com.fintech.userservice.service.UserService;
-import com.fintech.common.util.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +17,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(UserController.class)
@@ -26,13 +30,9 @@ class UserControllerTest {
   @Autowired private MockMvc mockMvc;
 
   @MockBean private UserService userService;
-
-  @MockBean
-  private AuthenticationManager authenticationManager; // Mocked as it's often used in controllers
-
-  @MockBean private JwtUtil jwtUtil; // Mocked - imported from common-module
-
-  @MockBean private UserDetailsService userDetailsService; // Often required by SecurityConfig
+  @MockBean private AuthenticationManager authenticationManager;
+  @MockBean private JwtUtil jwtUtil;
+  @MockBean private UserDetailsService userDetailsService;
 
   @Autowired private ObjectMapper objectMapper;
 
@@ -44,16 +44,18 @@ class UserControllerTest {
     testUser.setId(1L);
     testUser.setUsername("testuser");
     testUser.setEmail("test@example.com");
-    testUser.setPassword("password"); // Usually hashed in reality
+    testUser.setPassword("Password1@");
+    testUser.setRole("ROLE_USER");
   }
 
   @Test
-  void saveUser_shouldReturnCreatedUser() throws Exception {
+  void register_withValidUser_shouldReturnCreated() throws Exception {
+    when(userService.findByUsername(anyString())).thenReturn(null);
     when(userService.saveUser(any(User.class))).thenReturn(testUser);
 
     mockMvc
         .perform(
-            post("/api/users/register")
+            post("/users/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(testUser)))
         .andExpect(status().isCreated())
@@ -62,41 +64,66 @@ class UserControllerTest {
   }
 
   @Test
-  void getUserProfile_whenUserExists_shouldReturnUserProfile() throws Exception {
-    // Assuming the controller gets the username from the authenticated principal
-    // For testing, we might need to simulate authentication or pass the username
-    // Here, we simplify by assuming a path variable or request param for ID/username
-    // Or mock the principal extraction logic if applicable
-
+  void register_withExistingUsername_shouldReturnBadRequest() throws Exception {
     when(userService.findByUsername(anyString())).thenReturn(testUser);
-    // Mock authentication if needed for the endpoint
-    // SecurityContextHolder.getContext().setAuthentication(...);
 
-    // Adjust the endpoint path as per actual implementation (e.g., /api/users/profile or
-    // /api/users/{username})
     mockMvc
         .perform(
-            get("/api/users/profile") // Assuming /profile gets the authenticated user
-                // .with(user("testuser")) // Example using Spring Security Test
-                .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.username").value(testUser.getUsername()))
-        .andExpect(jsonPath("$.email").value(testUser.getEmail()));
+            post("/users/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testUser)))
+        .andExpect(status().isBadRequest());
   }
 
   @Test
-  void getUserProfile_whenUserDoesNotExist_shouldReturnNotFound() throws Exception {
-    when(userService.findByUsername(anyString())).thenReturn(null);
+  void register_withInvalidPassword_shouldReturnBadRequest() throws Exception {
+    testUser.setPassword("weak");
 
     mockMvc
         .perform(
-            get("/api/users/profile") // Assuming /profile gets the authenticated user
-                // .with(user("nonexistentuser")) // Example
-                .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isNotFound()); // Adjust expected status based on implementation
+            post("/users/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testUser)))
+        .andExpect(status().isBadRequest());
   }
 
-  // Add tests for login/authenticate endpoint if it exists in this controller
-  // Add tests for update profile endpoint
+  @Test
+  void login_withValidCredentials_shouldReturnToken() throws Exception {
+    UserDetails mockUserDetails = org.springframework.security.core.userdetails.User
+        .withUsername("testuser").password("encoded").roles("USER").build();
+    org.springframework.security.core.Authentication auth =
+        new UsernamePasswordAuthenticationToken(mockUserDetails, null, mockUserDetails.getAuthorities());
 
+    when(authenticationManager.authenticate(any())).thenReturn(auth);
+    when(jwtUtil.generateToken(any(UserDetails.class))).thenReturn("mock-jwt-token");
+
+    mockMvc
+        .perform(
+            post("/users/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testUser)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.token").value("mock-jwt-token"));
+  }
+
+  @Test
+  void login_withInvalidCredentials_shouldReturnUnauthorized() throws Exception {
+    when(authenticationManager.authenticate(any()))
+        .thenThrow(new BadCredentialsException("Bad credentials"));
+
+    mockMvc
+        .perform(
+            post("/users/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(testUser)))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  @WithMockUser
+  void getUserById_shouldReturnOk() throws Exception {
+    mockMvc
+        .perform(get("/users/1").contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
+  }
 }

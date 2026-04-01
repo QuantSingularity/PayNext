@@ -4,6 +4,7 @@ import com.fintech.common.util.JwtUtil;
 import com.fintech.common.util.PasswordValidator;
 import com.fintech.userservice.model.User;
 import com.fintech.userservice.service.UserService;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,9 +21,10 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/users")
 public class UserController {
-  private UserService userService;
-  private AuthenticationManager authenticationManager;
-  private JwtUtil jwtUtil;
+
+  private final UserService userService;
+  private final AuthenticationManager authenticationManager;
+  private final JwtUtil jwtUtil;
 
   @Autowired
   public UserController(
@@ -37,14 +39,29 @@ public class UserController {
     try {
       PasswordValidator.validate(user.getPassword());
     } catch (IllegalArgumentException e) {
-      return ResponseEntity.badRequest().body(e.getMessage());
+      return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+    }
+
+    if (user.getUsername() == null || user.getUsername().isBlank()) {
+      return ResponseEntity.badRequest().body(Map.of("error", "Username is required"));
+    }
+
+    if (user.getEmail() == null || user.getEmail().isBlank()) {
+      return ResponseEntity.badRequest().body(Map.of("error", "Email is required"));
     }
 
     if (userService.findByUsername(user.getUsername()) != null) {
-      return ResponseEntity.badRequest().body("Username is already taken");
+      return ResponseEntity.badRequest().body(Map.of("error", "Username is already taken"));
     }
+
     User savedUser = userService.saveUser(user);
-    return ResponseEntity.ok(savedUser);
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(
+            Map.of(
+                "id", savedUser.getId(),
+                "username", savedUser.getUsername(),
+                "email", savedUser.getEmail(),
+                "role", savedUser.getRole()));
   }
 
   @PostMapping("/login")
@@ -59,14 +76,18 @@ public class UserController {
       return ResponseEntity.ok(new AuthResponse(jwt));
     } catch (BadCredentialsException e) {
       log.warn("Authentication failed for user: {}", loginRequest.getUsername());
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body(Map.of("error", "Invalid credentials"));
     } catch (Exception e) {
       log.error(
-          "An unexpected error occurred during login for user: {}", loginRequest.getUsername(), e);
+          "Unexpected error during login for user: {}", loginRequest.getUsername(), e);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body("An unexpected error occurred");
+          .body(Map.of("error", "An unexpected error occurred"));
     }
   }
 
-  // Additional endpoints for profile management
+  @GetMapping("/{id}")
+  public ResponseEntity<?> getUserById(@PathVariable Long id) {
+    return ResponseEntity.ok(Map.of("id", id));
+  }
 }

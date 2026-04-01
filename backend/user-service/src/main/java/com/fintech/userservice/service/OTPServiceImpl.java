@@ -26,16 +26,16 @@ public class OTPServiceImpl implements OTPService {
 
   @Autowired private JavaMailSender mailSender;
 
-  @Value("${twilio.account.sid}")
+  @Value("${twilio.account.sid:placeholder}")
   private String twilioAccountSid;
 
-  @Value("${twilio.auth.token}")
+  @Value("${twilio.auth.token:placeholder}")
   private String twilioAuthToken;
 
-  @Value("${twilio.phone.number}")
+  @Value("${twilio.phone.number:+1234567890}")
   private String twilioPhoneNumber;
 
-  @Value("${spring.mail.from}")
+  @Value("${spring.mail.username:noreply@paynext.com}")
   private String fromEmail;
 
   private static final int OTP_LENGTH = 6;
@@ -45,8 +45,6 @@ public class OTPServiceImpl implements OTPService {
   @Override
   public OTPVerification generateEmailOTP(Long userId, String email, OTPVerification.OTPType type) {
     String otpCode = generateOTPCode();
-
-    // Invalidate existing OTPs for this user and type
     invalidateExistingOTPs(userId, type);
 
     OTPVerification otp = new OTPVerification();
@@ -57,7 +55,6 @@ public class OTPServiceImpl implements OTPService {
     otp.setExpiresAt(LocalDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES));
 
     otp = otpRepository.save(otp);
-
     sendEmailOTP(email, otpCode, type);
 
     log.info("Email OTP generated for user {} with type {}", userId, type);
@@ -68,8 +65,6 @@ public class OTPServiceImpl implements OTPService {
   public OTPVerification generateSMSOTP(
       Long userId, String phoneNumber, OTPVerification.OTPType type) {
     String otpCode = generateOTPCode();
-
-    // Invalidate existing OTPs for this user and type
     invalidateExistingOTPs(userId, type);
 
     OTPVerification otp = new OTPVerification();
@@ -80,7 +75,6 @@ public class OTPServiceImpl implements OTPService {
     otp.setExpiresAt(LocalDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES));
 
     otp = otpRepository.save(otp);
-
     sendSMSOTP(phoneNumber, otpCode, type);
 
     log.info("SMS OTP generated for user {} with type {}", userId, type);
@@ -136,7 +130,7 @@ public class OTPServiceImpl implements OTPService {
       }
     }
 
-    throw new RuntimeException("No existing OTP found to resend");
+    throw new RuntimeException("No existing OTP found to resend for user: " + userId);
   }
 
   @Override
@@ -157,10 +151,11 @@ public class OTPServiceImpl implements OTPService {
   private void invalidateExistingOTPs(Long userId, OTPVerification.OTPType type) {
     Optional<OTPVerification> existingOTP =
         otpRepository.findByUserIdAndOtpTypeAndIsUsedFalse(userId, type);
-    existingOTP.ifPresent(otp -> {
-      otp.setIsUsed(true);
-      otpRepository.save(otp);
-    });
+    existingOTP.ifPresent(
+        otp -> {
+          otp.setIsUsed(true);
+          otpRepository.save(otp);
+        });
   }
 
   private void sendEmailOTP(String email, String otpCode, OTPVerification.OTPType type) {
@@ -171,10 +166,7 @@ public class OTPServiceImpl implements OTPService {
       message.setSubject("PayNext - Your OTP Code");
       message.setText(
           String.format(
-              "Your OTP code for %s is: %s\\n"
-                  + "\\n"
-                  + "This code will expire in %d minutes.\\n"
-                  + "\\n"
+              "Your OTP code for %s is: %s%n%nThis code will expire in %d minutes.%n%n"
                   + "If you didn't request this code, please ignore this email.",
               type.toString().toLowerCase(), otpCode, OTP_EXPIRY_MINUTES));
 

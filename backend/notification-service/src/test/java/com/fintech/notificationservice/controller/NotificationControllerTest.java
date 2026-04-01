@@ -2,14 +2,13 @@ package com.fintech.notificationservice.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fintech.notificationservice.model.NotificationRequest;
 import com.fintech.notificationservice.service.NotificationService;
-import java.util.HashMap;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 class NotificationControllerTest {
 
   @Autowired private MockMvc mockMvc;
-
   @MockBean private NotificationService notificationService;
-
   @Autowired private ObjectMapper objectMapper;
 
   private NotificationRequest notificationRequest;
@@ -34,9 +31,8 @@ class NotificationControllerTest {
     notificationRequest = new NotificationRequest();
     notificationRequest.setRecipientEmail("test@example.com");
     notificationRequest.setSubject("Test Subject");
-    Map<String, Object> properties = new HashMap<>();
-    properties.put("message", "Test message body");
-    notificationRequest.setProperties(properties);
+    notificationRequest.setRecipient("test@example.com");
+    notificationRequest.setMessage("Test message body");
   }
 
   @Test
@@ -45,22 +41,22 @@ class NotificationControllerTest {
 
     mockMvc
         .perform(
-            post("/api/notifications/send")
+            post("/notifications/send")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(notificationRequest)))
         .andExpect(status().isOk());
   }
 
   @Test
-  void sendNotification_withInvalidRequest_shouldReturnBadRequest() throws Exception {
-    // Create invalid request (missing required fields)
-    NotificationRequest invalidRequest = new NotificationRequest();
+  void sendNotification_whenServiceThrows_shouldReturnInternalServerError() throws Exception {
+    doThrow(new RuntimeException("Mail server unavailable"))
+        .when(notificationService).sendNotification(any(NotificationRequest.class));
 
     mockMvc
         .perform(
-            post("/api/notifications/send")
+            post("/notifications/send")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(invalidRequest)))
-        .andExpect(status().isBadRequest());
+                .content(objectMapper.writeValueAsString(notificationRequest)))
+        .andExpect(status().isInternalServerError());
   }
 }

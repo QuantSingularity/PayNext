@@ -1,10 +1,5 @@
 package com.fintech.apigateway.security;
 
-
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureException;
-import io.jsonwebtoken.UnsupportedJwtException;
 import java.util.ArrayList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -23,17 +18,21 @@ public class JwtAuthenticationFilter implements WebFilter {
 
   @Autowired private com.fintech.common.util.JwtUtil jwtUtil;
 
+  private static final String[] PUBLIC_PATHS = {
+    "/login", "/register", "/actuator", "/public/"
+  };
+
   @Override
   public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
     ServerHttpRequest request = exchange.getRequest();
-
-    // Skip filter for specific paths
     String path = request.getPath().value();
-    if (path.contains("/login") || path.contains("/register") || path.contains("/actuator")) {
-      return chain.filter(exchange);
+
+    for (String publicPath : PUBLIC_PATHS) {
+      if (path.contains(publicPath)) {
+        return chain.filter(exchange);
+      }
     }
 
-    // Check for Authorization header
     if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
       return chain.filter(exchange);
     }
@@ -46,8 +45,12 @@ public class JwtAuthenticationFilter implements WebFilter {
     String token = authHeader.substring(7);
 
     try {
-      // Extract username and set authentication
       String username = jwtUtil.getUsernameFromToken(token);
+      if (username == null) {
+        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+        return exchange.getResponse().setComplete();
+      }
+
       UsernamePasswordAuthenticationToken authentication =
           new UsernamePasswordAuthenticationToken(username, null, new ArrayList<>());
 
@@ -55,11 +58,7 @@ public class JwtAuthenticationFilter implements WebFilter {
           .filter(exchange)
           .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
 
-    } catch (SignatureException
-        | MalformedJwtException
-        | ExpiredJwtException
-        | UnsupportedJwtException
-        | IllegalArgumentException e) {
+    } catch (Exception e) {
       exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
       return exchange.getResponse().setComplete();
     }

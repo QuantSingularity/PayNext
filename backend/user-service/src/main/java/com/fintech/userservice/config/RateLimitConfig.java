@@ -2,7 +2,6 @@ package com.fintech.userservice.config;
 
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Bucket4j;
 import io.github.bucket4j.Refill;
 import java.time.Duration;
 import java.util.Map;
@@ -26,7 +25,7 @@ public class RateLimitConfig {
         k -> {
           Bandwidth limit =
               Bandwidth.classic(capacity, Refill.intervally(refillTokens, refillPeriod));
-          return Bucket4j.builder().addLimit(limit).build();
+          return Bucket.builder().addLimit(limit).build();
         });
   }
 

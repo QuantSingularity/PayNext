@@ -1,6 +1,9 @@
 package com.fintech.userservice.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,16 +12,33 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "users")
+@Table(
+    name = "users",
+    uniqueConstraints = {
+      @UniqueConstraint(columnNames = "username"),
+      @UniqueConstraint(columnNames = "email")
+    })
 public class User {
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @NotBlank(message = "Username is required")
+  @Column(nullable = false, unique = true)
   private String username;
-  private String
-      password; // Note: Lombok's @Data will generate a setter, which is fine for JPA, but be
-                // careful when setting it directly.
+
+  @JsonIgnore
+  @Column(nullable = false)
+  private String password;
+
+  @Email(message = "Invalid email format")
+  @Column(nullable = false, unique = true)
   private String email;
-  private String role;
+
+  @Column(nullable = false)
+  private String role = "ROLE_USER";
+
+  @Column(nullable = false)
+  private boolean enabled = true;
 }

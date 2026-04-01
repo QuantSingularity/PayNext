@@ -5,34 +5,40 @@ import java.util.Collection;
 import java.util.Collections;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails; // Correct import
+import org.springframework.security.core.userdetails.UserDetails;
 
 public class UserPrincipal implements UserDetails {
-  private Long id;
-  private String username;
-  private String password;
-  private Collection<? extends GrantedAuthority> authorities;
+
+  private final Long id;
+  private final String username;
+  private final String password;
+  private final boolean enabled;
+  private final Collection<? extends GrantedAuthority> authorities;
 
   public UserPrincipal(
       Long id,
       String username,
       String password,
+      boolean enabled,
       Collection<? extends GrantedAuthority> authorities) {
     this.id = id;
     this.username = username;
     this.password = password;
+    this.enabled = enabled;
     this.authorities = authorities;
   }
 
   public static UserPrincipal create(User user) {
-    // Assuming the user role is stored as a string in the 'role' field
+    String role = user.getRole();
+    if (role == null || role.isBlank()) {
+      role = "ROLE_USER";
+    }
     Collection<GrantedAuthority> authorities =
-        Collections.singletonList(new SimpleGrantedAuthority(user.getRole()));
-
-    return new UserPrincipal(user.getId(), user.getUsername(), user.getPassword(), authorities);
+        Collections.singletonList(new SimpleGrantedAuthority(role));
+    return new UserPrincipal(
+        user.getId(), user.getUsername(), user.getPassword(), user.isEnabled(), authorities);
   }
 
-  // Getters for id, username, and password
   public Long getId() {
     return id;
   }
@@ -47,30 +53,28 @@ public class UserPrincipal implements UserDetails {
     return password;
   }
 
-  // Implement methods from UserDetails interface
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
     return authorities;
   }
 
-  // Account status methods can return true or be customized based on user status
   @Override
   public boolean isAccountNonExpired() {
-    return true; // Customize as needed
+    return true;
   }
 
   @Override
   public boolean isAccountNonLocked() {
-    return true; // Customize as needed
+    return true;
   }
 
   @Override
   public boolean isCredentialsNonExpired() {
-    return true; // Customize as needed
+    return true;
   }
 
   @Override
   public boolean isEnabled() {
-    return true; // Customize as needed
+    return enabled;
   }
 }

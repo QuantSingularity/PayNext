@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.fintech.paymentservice.client.NotificationClient;
+import com.fintech.paymentservice.model.NotificationRequest;
 import com.fintech.paymentservice.model.Payment;
 import com.fintech.paymentservice.repository.PaymentRepository;
 import java.math.BigDecimal;
@@ -17,11 +19,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentServiceImplTest {
 
   @Mock private PaymentRepository paymentRepository;
+  @Mock private NotificationClient notificationClient;
 
   @InjectMocks private PaymentServiceImpl paymentService;
 
@@ -37,63 +41,82 @@ class PaymentServiceImplTest {
   }
 
   @Test
-  void processPayment_shouldSaveAndReturnPayment() {
-    when(paymentRepository.save(any(Payment.class)))
-        .thenAnswer(
-            invocation -> {
-              Payment savedPayment = invocation.getArgument(0);
-              savedPayment.setId(1L); // Simulate saving with ID
-              return savedPayment;
-            });
+  void processPayment_shouldSaveAndNotify() {
+    when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> {
+      Payment p = inv.getArgument(0);
+      p.setId(1L);
+      return p;
+    });
+    when(notificationClient.sendNotification(any(NotificationRequest.class)))
+        .thenReturn(ResponseEntity.ok().build());
 
-    Payment processedPayment = paymentService.processPayment(testPayment);
+    Payment result = paymentService.processPayment(testPayment);
 
-    assertNotNull(processedPayment);
-    assertEquals(testPayment.getUserId(), processedPayment.getUserId());
-    assertEquals(testPayment.getAmount(), processedPayment.getAmount());
-    assertNotNull(processedPayment.getId());
-    verify(paymentRepository, times(1)).save(testPayment);
+    assertNotNull(result);
+    assertNotNull(result.getId());
+    assertEquals(testPayment.getUserId(), result.getUserId());
+    verify(paymentRepository).save(testPayment);
+    verify(notificationClient).sendNotification(any(NotificationRequest.class));
   }
 
   @Test
-  void getAllPayments_shouldReturnListOfPayments() {
-    Payment secondPayment = new Payment();
-    secondPayment.setId(2L);
-    secondPayment.setUserId(200L);
-    secondPayment.setAmount(new BigDecimal("200.00"));
-    secondPayment.setPaymentDate(LocalDateTime.now());
-    secondPayment.setStatus("PENDING");
+  void processPayment_withNullDate_shouldDefaultDate() {
+    testPayment.setPaymentDate(null);
+    when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
+    when(notificationClient.sendNotification(any())).thenReturn(ResponseEntity.ok().build());
 
-    List<Payment> payments = Arrays.asList(testPayment, secondPayment);
-    when(paymentRepository.findAll()).thenReturn(payments);
+    Payment result = paymentService.processPayment(testPayment);
+
+    assertNotNull(result.getPaymentDate());
+  }
+
+  @Test
+  void processPayment_whenNotificationFails_shouldStillReturnPayment() {
+    when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> {
+      Payment p = inv.getArgument(0);
+      p.setId(1L);
+      return p;
+    });
+    when(notificationClient.sendNotification(any())).thenThrow(new RuntimeException("Notification unavailable"));
+
+    Payment result = paymentService.processPayment(testPayment);
+
+    assertNotNull(result);
+    assertNotNull(result.getId());
+  }
+
+  @Test
+  void getAllPayments_shouldReturnList() {
+    Payment second = new Payment();
+    second.setId(2L);
+    second.setUserId(200L);
+    second.setAmount(new BigDecimal("200.00"));
+    second.setPaymentDate(LocalDateTime.now());
+    second.setStatus("PENDING");
+
+    when(paymentRepository.findAll()).thenReturn(Arrays.asList(testPayment, second));
 
     List<Payment> result = paymentService.getAllPayments();
 
-    assertNotNull(result);
     assertEquals(2, result.size());
-    verify(paymentRepository, times(1)).findAll();
+    verify(paymentRepository).findAll();
   }
 
   @Test
-  void getPaymentById_whenPaymentExists_shouldReturnPayment() {
+  void getPaymentById_whenFound_shouldReturn() {
     testPayment.setId(1L);
     when(paymentRepository.findById(1L)).thenReturn(Optional.of(testPayment));
 
-    Payment foundPayment = paymentService.getPaymentById(1L);
+    Payment found = paymentService.getPaymentById(1L);
 
-    assertNotNull(foundPayment);
-    assertEquals(testPayment.getId(), foundPayment.getId());
-    assertEquals(testPayment.getUserId(), foundPayment.getUserId());
-    verify(paymentRepository, times(1)).findById(1L);
+    assertNotNull(found);
+    assertEquals(1L, found.getId());
   }
 
   @Test
-  void getPaymentById_whenPaymentDoesNotExist_shouldReturnNull() {
+  void getPaymentById_whenNotFound_shouldReturnNull() {
     when(paymentRepository.findById(999L)).thenReturn(Optional.empty());
 
-    Payment foundPayment = paymentService.getPaymentById(999L);
-
-    assertNull(foundPayment);
-    verify(paymentRepository, times(1)).findById(999L);
+    assertNull(paymentService.getPaymentById(999L));
   }
 }

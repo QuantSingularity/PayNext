@@ -1,6 +1,7 @@
 package com.fintech.apigateway.security;
 
 import java.util.Arrays;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,35 +25,37 @@ public class SecurityConfig {
 
   @Bean
   public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
-    return http.csrf()
-        .disable()
-        .cors()
-        .configurationSource(corsConfigurationSource())
-        .and()
-        .exceptionHandling()
-        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-        .and()
-        .authorizeExchange()
-        .pathMatchers("/actuator/**", "/login", "/register", "/public/**")
-        .permitAll()
-        .anyExchange()
-        .authenticated()
-        .and()
+    return http
+        .csrf(ServerHttpSecurity.CsrfSpec::disable)
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .exceptionHandling(
+            ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
+        .authorizeExchange(
+            exchange ->
+                exchange
+                    .pathMatchers(
+                        "/actuator/**",
+                        "/*/users/login",
+                        "/*/users/register",
+                        "/public/**")
+                    .permitAll()
+                    .anyExchange()
+                    .authenticated())
         .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
-        .httpBasic()
-        .disable()
-        .formLogin()
-        .disable()
+        .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
+        .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
         .build();
   }
 
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(Arrays.asList("*"));
-    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    configuration.setAllowedOriginPatterns(List.of("*"));
+    configuration.setAllowedMethods(
+        Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
     configuration.setAllowedHeaders(
         Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
+    configuration.setAllowCredentials(false);
     configuration.setMaxAge(3600L);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

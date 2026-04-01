@@ -8,8 +8,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class UserServiceImpl implements UserService {
-  private UserRepository userRepository;
-  private PasswordEncoder passwordEncoder;
+
+  private final UserRepository userRepository;
+  private final PasswordEncoder passwordEncoder;
 
   @Autowired
   public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
@@ -19,13 +20,12 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public User saveUser(User user) {
-    // Encrypt the password before saving
-    if (user.getPassword() != null && !user.getPassword().isEmpty()) {
-      user.setPassword(passwordEncoder.encode(user.getPassword()));
-    } else {
-      // Handle case where password is null or empty, maybe throw an exception or log a warning
-      // For now, let's just log and skip encoding, which will likely fail later.
-      // A better approach would be to enforce validation in the controller/model.
+    if (user.getPassword() == null || user.getPassword().isBlank()) {
+      throw new IllegalArgumentException("Password must not be empty");
+    }
+    user.setPassword(passwordEncoder.encode(user.getPassword()));
+    if (user.getRole() == null || user.getRole().isBlank()) {
+      user.setRole("ROLE_USER");
     }
     return userRepository.save(user);
   }

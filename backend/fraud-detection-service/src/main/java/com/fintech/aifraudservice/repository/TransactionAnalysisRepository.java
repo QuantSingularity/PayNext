@@ -31,14 +31,13 @@ public interface TransactionAnalysisRepository extends JpaRepository<Transaction
       @Param("userId") Long userId, @Param("since") LocalDateTime since);
 
   @Query(
-      "SELECT COUNT(ta) FROM TransactionAnalysis ta WHERE ta.userId = :userId AND ta.createdAt >="
-          + " :since")
+      "SELECT COUNT(ta) FROM TransactionAnalysis ta WHERE ta.userId = :userId AND ta.createdAt >= :since")
   Long countUserTransactionsSince(
       @Param("userId") Long userId, @Param("since") LocalDateTime since);
 
   @Query(
-      "SELECT COALESCE(SUM(ta.amount), 0) FROM TransactionAnalysis ta WHERE ta.userId = :userId AND"
-          + " ta.createdAt >= :since")
+      "SELECT COALESCE(SUM(ta.amount), 0) FROM TransactionAnalysis ta"
+          + " WHERE ta.userId = :userId AND ta.createdAt >= :since")
   BigDecimal sumUserTransactionAmountSince(
       @Param("userId") Long userId, @Param("since") LocalDateTime since);
 
@@ -46,36 +45,38 @@ public interface TransactionAnalysisRepository extends JpaRepository<Transaction
   Long countTransactionsSince(@Param("since") LocalDateTime since);
 
   @Query(
-      "SELECT COUNT(ta) FROM TransactionAnalysis ta WHERE ta.fraudStatus = 'DECLINED' AND"
-          + " ta.createdAt >= :since")
+      "SELECT COUNT(ta) FROM TransactionAnalysis ta"
+          + " WHERE ta.fraudStatus = 'DECLINED' AND ta.createdAt >= :since")
   Long countFraudTransactionsSince(@Param("since") LocalDateTime since);
 
   @Query(
-      "SELECT COUNT(ta) FROM TransactionAnalysis ta WHERE ta.riskLevel IN ('HIGH', 'CRITICAL') AND"
-          + " ta.createdAt >= :since")
+      "SELECT COUNT(ta) FROM TransactionAnalysis ta"
+          + " WHERE ta.riskLevel IN ('HIGH', 'CRITICAL') AND ta.createdAt >= :since")
   Long countHighRiskTransactionsSince(@Param("since") LocalDateTime since);
 
   @Query(
-      "SELECT ta FROM TransactionAnalysis ta WHERE ta.riskLevel IN ('HIGH', 'CRITICAL') AND"
-          + " ta.fraudStatus = 'UNDER_REVIEW' ORDER BY ta.riskScore DESC")
-  List<TransactionAnalysis> findHighRiskTransactions(@Param("limit") int limit);
+      "SELECT ta FROM TransactionAnalysis ta"
+          + " WHERE ta.riskLevel IN ('HIGH', 'CRITICAL') AND ta.fraudStatus = 'UNDER_REVIEW'"
+          + " ORDER BY ta.riskScore DESC")
+  List<TransactionAnalysis> findHighRiskTransactions(Pageable pageable);
 
-  @Query("SELECT ta FROM TransactionAnalysis ta WHERE ta.createdAt BETWEEN :startDate AND :endDate")
+  @Query(
+      "SELECT ta FROM TransactionAnalysis ta WHERE ta.createdAt BETWEEN :startDate AND :endDate")
   Page<TransactionAnalysis> findByDateRange(
       @Param("startDate") LocalDateTime startDate,
       @Param("endDate") LocalDateTime endDate,
       Pageable pageable);
 
   @Query(
-      "SELECT ta.merchantCategory, COUNT(ta) as count FROM TransactionAnalysis ta WHERE"
-          + " ta.fraudStatus = 'DECLINED' AND ta.createdAt >= :since GROUP BY ta.merchantCategory"
-          + " ORDER BY count DESC")
+      "SELECT ta.merchantCategory, COUNT(ta) as count FROM TransactionAnalysis ta"
+          + " WHERE ta.fraudStatus = 'DECLINED' AND ta.createdAt >= :since"
+          + " GROUP BY ta.merchantCategory ORDER BY count DESC")
   List<Object[]> findTopFraudMerchantCategories(@Param("since") LocalDateTime since);
 
   @Query(
-      "SELECT ta.locationCountry, COUNT(ta) as count FROM TransactionAnalysis ta WHERE"
-          + " ta.fraudStatus = 'DECLINED' AND ta.createdAt >= :since GROUP BY ta.locationCountry"
-          + " ORDER BY count DESC")
+      "SELECT ta.locationCountry, COUNT(ta) as count FROM TransactionAnalysis ta"
+          + " WHERE ta.fraudStatus = 'DECLINED' AND ta.createdAt >= :since"
+          + " GROUP BY ta.locationCountry ORDER BY count DESC")
   List<Object[]> findTopFraudCountries(@Param("since") LocalDateTime since);
 
   @Query("SELECT AVG(ta.riskScore) FROM TransactionAnalysis ta WHERE ta.userId = :userId")

@@ -6,6 +6,7 @@ import com.fintech.userservice.repository.AuditLogRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -45,7 +46,10 @@ public class AuditServiceImpl implements AuditService {
       if (request != null) {
         auditLog.setIpAddress(getClientIpAddress(request));
         auditLog.setUserAgent(request.getHeader("User-Agent"));
-        auditLog.setSessionId(request.getSession().getId());
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+          auditLog.setSessionId(session.getId());
+        }
       }
 
       if (requestData != null) {
@@ -56,7 +60,6 @@ public class AuditServiceImpl implements AuditService {
         auditLog.setResponseData(objectMapper.writeValueAsString(responseData));
       }
 
-      // Set severity based on status code
       if (statusCode != null) {
         if (statusCode >= 500) {
           auditLog.setSeverity(AuditLog.Severity.ERROR);
@@ -93,12 +96,14 @@ public class AuditServiceImpl implements AuditService {
       if (request != null) {
         auditLog.setIpAddress(getClientIpAddress(request));
         auditLog.setUserAgent(request.getHeader("User-Agent"));
-        auditLog.setSessionId(request.getSession().getId());
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+          auditLog.setSessionId(session.getId());
+        }
       }
 
       auditLogRepository.save(auditLog);
 
-      // Log critical security events
       if (severity == AuditLog.Severity.CRITICAL || severity == AuditLog.Severity.ERROR) {
         log.warn("Security event logged: {} - {} - {}", action, resource, errorMessage);
       }
@@ -157,12 +162,10 @@ public class AuditServiceImpl implements AuditService {
     if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
       return xForwardedFor.split(",")[0].trim();
     }
-
     String xRealIp = request.getHeader("X-Real-IP");
     if (xRealIp != null && !xRealIp.isEmpty()) {
       return xRealIp;
     }
-
     return request.getRemoteAddr();
   }
 }

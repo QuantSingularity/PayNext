@@ -1,4 +1,3 @@
-<!-- api-gateway/pom.xml -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="
@@ -7,12 +6,11 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- Inherit from the root POM -->
     <parent>
         <groupId>com.fintech</groupId>
         <artifactId>paynext-backend</artifactId>
         <version>1.0.0</version>
-        <relativePath>../pom.xml</relativePath> <!-- Adjust if necessary -->
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>api-gateway</artifactId>
@@ -20,17 +18,15 @@
     <packaging>jar</packaging>
 
     <dependencies>
-        <!-- Spring Boot Actuator -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
-        <!-- Spring Cloud Gateway (WebFlux-based) -->
+
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-gateway</artifactId>
             <exclusions>
-                <!-- Exclude Spring MVC Starter if it's being pulled transitively -->
                 <exclusion>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-starter-web</artifactId>
@@ -38,25 +34,15 @@
             </exclusions>
         </dependency>
 
-        <!-- Spring Boot Starter WebFlux (required by Spring Cloud Gateway) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
-            <exclusions>
-                <!-- Exclude Spring MVC Starter to prevent conflicts -->
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-web</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
-        <!-- Eureka Client -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
             <exclusions>
-                <!-- Exclude Spring MVC Starter if it's being pulled transitively -->
                 <exclusion>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-starter-web</artifactId>
@@ -64,32 +50,10 @@
             </exclusions>
         </dependency>
 
-        <!-- Common Module for shared utilities like JwtUtil -->
         <dependency>
             <groupId>com.fintech</groupId>
             <artifactId>common-module</artifactId>
             <version>${project.version}</version>
-        </dependency>
-
-        <!-- H2 Database (for testing purposes, can be removed if not needed) -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
-        <!-- Spring Boot Starter Test -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-            <exclusions>
-                <!-- Exclude Spring MVC Starter to prevent conflicts in tests -->
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-web</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <dependency>
@@ -97,15 +61,16 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-        <!-- Reactor Test (Optional, for testing reactive components) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-
-
-    <!-- Build plugins are inherited from the parent POM -->
 </project>
