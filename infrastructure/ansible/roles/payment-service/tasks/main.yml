@@ -1,27 +1,41 @@
 ---
-- name: Copy Payment Service application jar
-  copy:
-    src: /path/to/payment-service.jar
-    dest: /opt/payment-service/payment-service.jar
+- name: Create payment-service directory
+  file:
+    path: "/opt/paynext/payment-service"
+    state: directory
+    mode: "0755"
     owner: root
     group: root
-    mode: "0755"
-- name: Install dependencies
-  ansible.builtin.yum:
-    name: "{{ item }}"
+
+- name: Ensure required packages are installed
+  apt:
+    name:
+      - openjdk-17-jdk
+      - unzip
     state: present
-  loop:
-    - java-11-openjdk
-    - unzip
+    update_cache: yes
+
 - name: Configure Payment Service environment variables
   template:
     src: payment-service.env.j2
     dest: /etc/payment-service.env
-    mode: "0644"
+    mode: "0640"
+    owner: root
+    group: root
+  notify: Restart Payment Service
+
 - name: Create Payment Service systemd service file
   template:
     src: payment-service.service.j2
     dest: /etc/systemd/system/payment-service.service
+    mode: "0644"
   notify:
     - Reload systemd
     - Restart Payment Service
+
+- name: Reload systemd and enable payment-service
+  systemd:
+    name: payment-service
+    daemon_reload: yes
+    enabled: yes
+    state: started

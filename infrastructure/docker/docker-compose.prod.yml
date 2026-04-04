@@ -1,0 +1,43 @@
+version: "3.9"
+
+# Production overrides - use with: docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+services:
+  postgres:
+    ports: []
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+
+  redis:
+    ports: []
+
+  eureka-server:
+    deploy:
+      replicas: 2
+
+  user-service:
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          memory: 1g
+
+  payment-service:
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          memory: 1g
+
+  notification-service:
+    deploy:
+      replicas: 2
+
+  api-gateway:
+    deploy:
+      replicas: 3
+
+  frontend:
+    deploy:
+      replicas: 2

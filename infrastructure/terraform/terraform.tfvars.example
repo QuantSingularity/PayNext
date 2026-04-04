@@ -320,3 +320,6 @@ tags = {
 # 8. Monitor costs and adjust resources as needed
 # 9. Keep this file secure and do not commit sensitive values to version control
 # 10. Use AWS Secrets Manager or Parameter Store for sensitive configuration
+
+# Security Hub
+enable_security_hub = true

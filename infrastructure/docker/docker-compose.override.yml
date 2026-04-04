@@ -1,0 +1,35 @@
+version: "3.9"
+
+# Development overrides - applied automatically when running docker compose up locally
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+
+  user-service:
+    environment:
+      JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5000"
+    ports:
+      - "8000:8000"
+      - "5000:5000"
+
+  payment-service:
+    environment:
+      JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5001"
+    ports:
+      - "8003:8003"
+      - "5001:5001"
+
+  notification-service:
+    environment:
+      JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5002"
+    ports:
+      - "8004:8004"
+      - "5002:5002"
+
+  api-gateway:
+    environment:
+      JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5003"
+    ports:
+      - "8002:8002"
+      - "5003:5003"

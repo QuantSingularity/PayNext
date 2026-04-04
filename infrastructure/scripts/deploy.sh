@@ -143,7 +143,8 @@ create_tfvars() {
 
         # Update environment and region in tfvars
         sed -i.bak "s/environment = \"dev\"/environment = \"$ENVIRONMENT\"/" "$tfvars_file"
-        sed -i.bak "s/region = \"us-west-2\"/region = \"$REGION\"/" "$tfvars_file"
+        sed -i.bak "s/aws_region = \"us-west-2\"/aws_region = \"$REGION\"/" "$tfvars_file"
+        rm -f "${tfvars_file}.bak"
 
         warn "terraform.tfvars created from example. Please review and customize before proceeding."
         info "Edit $tfvars_file to match your requirements"

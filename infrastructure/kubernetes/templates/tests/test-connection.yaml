@@ -2,17 +2,38 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: "{{ .Release.Name }}-test-connection"
+  namespace: '{{ include "paynext.namespace" . }}'
   labels:
-    app: test-connection
+    helm.sh/chart: '{{ include "paynext.chart" . }}'
+    app.kubernetes.io/name: '{{ include "paynext.name" . }}'
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/managed-by: "{{ .Release.Service }}"
+    app.kubernetes.io/component: test
   annotations:
-    helm.sh/hook: test
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
+  serviceAccountName: '{{ include "paynext.serviceAccountName" . }}'
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
   containers:
-    - name: wget
-      image: busybox
-      command: ["wget"]
-      args:
-        [
-          "{{ .Release.Name }}-api-gateway:{{ .Values.apiGateway.service.port }}",
-        ]
+    - name: test-api-gateway
+      image: curlimages/curl:8.4.0
+      command:
+        - sh
+        - -c
+        - |
+          echo "Testing API Gateway health endpoint..."
+          curl -f http://api-gateway:{{ (index .Values.services "api-gateway").service.ports | first | pluck "port" | first }}/actuator/health
+          echo "Testing Eureka Server health endpoint..."
+          curl -f http://eureka-server:{{ (index .Values.services "eureka-server").service.ports | first | pluck "port" | first }}/actuator/health
+          echo "All health checks passed!"
+      resources:
+        requests:
+          memory: "32Mi"
+          cpu: "10m"
+        limits:
+          memory: "64Mi"
+          cpu: "50m"
   restartPolicy: Never

@@ -1,26 +1,27 @@
 ---
 all:
   vars:
-    ansible_user: dev_user
+    ansible_user: ubuntu
     ansible_ssh_private_key_file: ~/.ssh/dev_key.pem
+    environment: dev
   children:
-    api-gateway:
+    api_gateway:
       hosts:
         dev-api-gateway-1:
           ansible_host: 192.168.1.10
-    eureka-server:
+    eureka_server:
       hosts:
         dev-eureka-server-1:
           ansible_host: 192.168.1.11
-    user-service:
+    user_service:
       hosts:
         dev-user-service-1:
           ansible_host: 192.168.1.12
-    payment-service:
+    payment_service:
       hosts:
         dev-payment-service-1:
           ansible_host: 192.168.1.13
-    notification-service:
+    notification_service:
       hosts:
         dev-notification-service-1:
           ansible_host: 192.168.1.14
@@ -28,3 +29,7 @@ all:
       hosts:
         dev-frontend-1:
           ansible_host: 192.168.1.15
+    kubernetes_masters:
+      hosts:
+        dev-k8s-master-1:
+          ansible_host: 192.168.1.20

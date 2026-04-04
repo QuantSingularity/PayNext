@@ -262,3 +262,9 @@ variable "compliance_contact_email" {
     error_message = "Compliance contact email must be a valid email address."
   }
 }
+
+variable "enable_security_hub" {
+  description = "Enable AWS Security Hub for centralized security findings"
+  type        = bool
+  default     = true
+}

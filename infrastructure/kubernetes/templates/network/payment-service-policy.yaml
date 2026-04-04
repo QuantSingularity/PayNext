@@ -2,32 +2,47 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: paynext-payment-service-policy
-  namespace: paynext
+  namespace: { { .Values.global.namespace | default "paynext" } }
 spec:
   podSelector:
     matchLabels:
-      app: payment-service
+      app.kubernetes.io/component: payment-service
   ingress:
     - from:
         - podSelector:
             matchLabels:
-              app: api-gateway
+              app.kubernetes.io/component: api-gateway
       ports:
         - protocol: TCP
-          port: 8004
+          port: 8003
   egress:
     - to:
         - podSelector:
             matchLabels:
-              app: eureka-server
+              app.kubernetes.io/component: eureka-server
       ports:
         - protocol: TCP
           port: 8001
-    # Allow egress to payment gateway (external)
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: notification-service
+      ports:
+        - protocol: TCP
+          port: 8004
     - to: []
       ports:
         - protocol: TCP
           port: 443
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
   policyTypes:
     - Ingress
     - Egress

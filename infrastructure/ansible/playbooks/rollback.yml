@@ -2,25 +2,43 @@
 - name: Rollback PayNext Application
   hosts: all
   become: yes
+  vars:
+    docker_compose_path: "/opt/paynext/docker-compose.yml"
+    health_check_url: "http://localhost:8002/actuator/health"
   tasks:
-    - name: Stop Docker Compose Services
-      docker_compose:
-        project_src: /path/to/your/docker-compose.yml
+    - name: Stop Docker Compose services
+      community.docker.docker_compose_v2:
+        project_src: /opt/paynext
         state: absent
-    - name: Remove Docker Images
-      shell: |
-        docker rmi $(docker images -q "quantsingularity/backend:*" "quantsingularity/frontend:*") || true
       ignore_errors: yes
-    - name: Clean up unused Docker volumes and networks
+
+    - name: Remove PayNext Docker images
+      community.docker.docker_image:
+        name: "{{ item }}"
+        state: absent
+        force_absent: yes
+      loop:
+        - "quantsingularity/backend-api-gateway"
+        - "quantsingularity/backend-eureka-server"
+        - "quantsingularity/backend-user-service"
+        - "quantsingularity/backend-payment-service"
+        - "quantsingularity/backend-notification-service"
+        - "quantsingularity/frontend-fintech-payment"
+      ignore_errors: yes
+
+    - name: Clean up unused Docker resources
       command: docker system prune -f
-    - name: Confirm rollback success
-      uri:
-        url: "http://localhost:8002/health"
-        method: GET
-        status_code: 404
       ignore_errors: yes
-      register: result
-    - name: Debug rollback result
+
+    - name: Verify services are down
+      uri:
+        url: "{{ health_check_url }}"
+        method: GET
+        status_code: [200, 404, 503]
+      register: health_result
+      ignore_errors: yes
+
+    - name: Confirm rollback completed
       debug:
-        msg: "Rollback completed successfully. No services available."
-      when: result.failed
+        msg: "Rollback completed. Services are no longer running."
+      when: health_result.failed or health_result.status != 200

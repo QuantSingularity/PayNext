@@ -1,1 +1,23 @@
 ---
+- name: Configure Kubernetes for PayNext
+  hosts: kubernetes_masters
+  become: yes
+  tasks:
+    - name: Apply PayNext Helm chart
+      command: >
+        helm upgrade --install paynext /opt/paynext/helm/
+        --namespace paynext
+        --create-namespace
+        --values /opt/paynext/helm/values.yaml
+        --wait
+        --timeout 10m
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+
+    - name: Verify all pods are running
+      command: kubectl get pods -n paynext
+      register: pod_status
+
+    - name: Display pod status
+      debug:
+        msg: "{{ pod_status.stdout }}"

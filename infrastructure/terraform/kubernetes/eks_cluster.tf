@@ -1,44 +1,56 @@
 module "eks" {
-  source          = "terraform-aws-modules/eks/aws"
-  version         = "18.29.0" # Update as per latest available
+  source  = "terraform-aws-modules/eks/aws"
+  version = "20.8.4"
+
   cluster_name    = var.cluster_name
-  cluster_version = "1.21" # Specify the EKS version
-  subnets         = module.vpc.public_subnets
-  vpc_id          = module.vpc.vpc_id
+  cluster_version = var.kubernetes_version
 
-  # Worker nodes configuration
-  node_groups = {
+  vpc_id                         = module.vpc.vpc_id
+  subnet_ids                     = module.vpc.private_subnet_ids
+  cluster_endpoint_public_access = false
+
+  cluster_addons = {
+    coredns = {
+      most_recent = true
+    }
+    kube-proxy = {
+      most_recent = true
+    }
+    vpc-cni = {
+      most_recent = true
+    }
+    aws-ebs-csi-driver = {
+      most_recent = true
+    }
+  }
+
+  eks_managed_node_groups = {
     paynext_nodes = {
-      desired_capacity = 2
-      max_capacity     = 3
-      min_capacity     = 1
+      desired_size = 2
+      max_size     = 5
+      min_size     = 1
 
-      instance_type = "t3.medium"
-      key_name      = var.key_pair_name # Make sure to specify your key pair in vars
+      instance_types = [var.node_instance_type]
+      capacity_type  = "ON_DEMAND"
+
+      labels = {
+        Environment = var.environment
+        Project     = "PayNext"
+      }
 
       tags = {
-        Name = "paynext-eks-node"
+        Name        = "paynext-eks-node-${var.environment}"
+        Environment = var.environment
+        Project     = "PayNext"
       }
     }
   }
 
-  # Enable necessary Kubernetes features for the EKS cluster
-  enable_irsa     = true
-  manage_aws_auth = true
+  enable_irsa = true
 
   tags = {
-    Environment = "production"
+    Environment = var.environment
     Project     = "PayNext"
+    ManagedBy   = "Terraform"
   }
-}
-
-# IAM Role for the EKS cluster to allow Kubernetes to access AWS services
-resource "aws_iam_role_policy_attachment" "eks_iam_policy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-  role       = module.eks.eks_cluster_iam_role_name
-}
-
-resource "aws_iam_role_policy_attachment" "eks_service_policy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
-  role       = module.eks.eks_cluster_iam_role_name
 }

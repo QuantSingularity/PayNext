@@ -104,3 +104,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "dr_region" {
+  description = "Disaster recovery region for secrets replication"
+  type        = string
+  default     = "us-east-1"
+}

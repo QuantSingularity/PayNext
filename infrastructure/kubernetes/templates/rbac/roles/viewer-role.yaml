@@ -2,7 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: paynext-viewer
-  namespace: paynext
+  namespace: { { include "paynext.namespace" . } }
 rules:
   - apiGroups: [""]
     resources: ["pods", "services", "configmaps"]

@@ -1,0 +1,272 @@
+version: "3.9"
+
+networks:
+  paynext-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres-data:
+  redis-data:
+  prometheus-data:
+  grafana-data:
+
+services:
+  # ─── Infrastructure ────────────────────────────────────────────────────────
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: paynext-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: paynext
+      POSTGRES_USER: paynext
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - paynext-network
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paynext -d paynext"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    container_name: paynext-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required} --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - paynext-network
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Service Discovery ─────────────────────────────────────────────────────
+
+  eureka-server:
+    image: quantsingularity/backend-eureka-server:${IMAGE_TAG:-latest}
+    container_name: paynext-eureka-server
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      SERVER_PORT: 8001
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
+      EUREKA_CLIENT_FETCH_REGISTRY: "false"
+    networks:
+      - paynext-network
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -f http://localhost:8001/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ─── Backend Services ──────────────────────────────────────────────────────
+
+  user-service:
+    image: quantsingularity/backend-user-service:${IMAGE_TAG:-latest}
+    container_name: paynext-user-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      SERVER_PORT: 8000
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8001/eureka
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/user_service_db
+      SPRING_DATASOURCE_USERNAME: paynext
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD}
+    networks:
+      - paynext-network
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -f http://localhost:8000/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  payment-service:
+    image: quantsingularity/backend-payment-service:${IMAGE_TAG:-latest}
+    container_name: paynext-payment-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      SERVER_PORT: 8003
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8001/eureka
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/payment_service_db
+      SPRING_DATASOURCE_USERNAME: paynext
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      PAYMENT_GATEWAY_KEY: ${PAYMENT_GATEWAY_KEY:?PAYMENT_GATEWAY_KEY is required}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD}
+    networks:
+      - paynext-network
+    ports:
+      - "8003:8003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -f http://localhost:8003/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  notification-service:
+    image: quantsingularity/backend-notification-service:${IMAGE_TAG:-latest}
+    container_name: paynext-notification-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      SERVER_PORT: 8004
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8001/eureka
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/notification_service_db
+      SPRING_DATASOURCE_USERNAME: paynext
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      NOTIFICATION_API_KEY: ${NOTIFICATION_API_KEY:?NOTIFICATION_API_KEY is required}
+    networks:
+      - paynext-network
+    ports:
+      - "8004:8004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -f http://localhost:8004/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  api-gateway:
+    image: quantsingularity/backend-api-gateway:${IMAGE_TAG:-latest}
+    container_name: paynext-api-gateway
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      SERVER_PORT: 8002
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8001/eureka
+      JWT_SECRET: ${JWT_SECRET}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD}
+    networks:
+      - paynext-network
+    ports:
+      - "8002:8002"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      payment-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -f http://localhost:8002/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  # ─── Frontend ──────────────────────────────────────────────────────────────
+
+  frontend:
+    image: quantsingularity/frontend-fintech-payment:${IMAGE_TAG:-latest}
+    container_name: paynext-frontend
+    restart: unless-stopped
+    environment:
+      REACT_APP_API_URL: http://api-gateway:8002
+      REACT_APP_ENV: ${SPRING_PROFILES_ACTIVE:-docker}
+    networks:
+      - paynext-network
+    ports:
+      - "3000:80"
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # ─── Monitoring ────────────────────────────────────────────────────────────
+
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: paynext-prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - paynext-network
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: paynext-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_DOMAIN: localhost
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - paynext-network
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus

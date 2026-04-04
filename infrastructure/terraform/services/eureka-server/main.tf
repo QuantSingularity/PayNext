@@ -1,18 +1,15 @@
-provider "kubernetes" {
-  config_path = "~/.kube/config"
-}
-
 resource "kubernetes_deployment" "eureka_server" {
   metadata {
     name      = "eureka-server"
-    namespace = "default"
+    namespace = var.namespace
     labels = {
-      app = "eureka-server"
+      app         = "eureka-server"
+      environment = var.environment
     }
   }
 
   spec {
-    replicas = 1
+    replicas = var.replica_count
 
     selector {
       match_labels = {
@@ -23,14 +20,21 @@ resource "kubernetes_deployment" "eureka_server" {
     template {
       metadata {
         labels = {
-          app = "eureka-server"
+          app         = "eureka-server"
+          environment = var.environment
         }
       }
 
       spec {
+        security_context {
+          run_as_non_root = true
+          run_as_user     = 10001
+          fs_group        = 10001
+        }
+
         container {
           name  = "eureka-server"
-          image = "quantsingularity/backend:eureka-server"
+          image = "quantsingularity/backend-eureka-server:latest"
 
           ports {
             container_port = 8001
@@ -39,6 +43,43 @@ resource "kubernetes_deployment" "eureka_server" {
           env {
             name  = "EUREKA_SERVER_PORT"
             value = "8001"
+          }
+          env {
+            name  = "SPRING_PROFILES_ACTIVE"
+            value = var.environment
+          }
+
+          resources {
+            requests = {
+              memory = "256Mi"
+              cpu    = "250m"
+            }
+            limits = {
+              memory = "512Mi"
+              cpu    = "500m"
+            }
+          }
+
+          liveness_probe {
+            http_get {
+              path = "/actuator/health/liveness"
+              port = 8001
+            }
+            initial_delay_seconds = 60
+            period_seconds        = 10
+            timeout_seconds       = 5
+            failure_threshold     = 5
+          }
+
+          readiness_probe {
+            http_get {
+              path = "/actuator/health/readiness"
+              port = 8001
+            }
+            initial_delay_seconds = 30
+            period_seconds        = 10
+            timeout_seconds       = 5
+            failure_threshold     = 3
           }
         }
       }
@@ -49,7 +90,7 @@ resource "kubernetes_deployment" "eureka_server" {
 resource "kubernetes_service" "eureka_server" {
   metadata {
     name      = "eureka-server"
-    namespace = "default"
+    namespace = var.namespace
     labels = {
       app = "eureka-server"
     }
@@ -61,6 +102,7 @@ resource "kubernetes_service" "eureka_server" {
     }
 
     port {
+      name        = "http"
       port        = 8001
       target_port = 8001
     }

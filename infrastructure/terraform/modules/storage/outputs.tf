@@ -270,3 +270,8 @@ output "disaster_recovery_info" {
     backup_retention_days            = var.backup_retention_days
   }
 }
+
+output "s3_bucket_id" {
+  description = "ID of the primary S3 bucket (alias for primary_bucket_id)"
+  value       = aws_s3_bucket.paynext_primary.id
+}

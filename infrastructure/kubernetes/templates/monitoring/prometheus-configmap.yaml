@@ -44,10 +44,10 @@ data:
           - targets: ['api-gateway:8002']
       - job_name: 'user-service'
         static_configs:
-          - targets: ['user-service:8003']
+          - targets: ['user-service:8000']
       - job_name: 'payment-service'
         static_configs:
-          - targets: ['payment-service:8004']
+          - targets: ['payment-service:8003']
       - job_name: 'notification-service'
         static_configs:
-          - targets: ['notification-service:8005']
+          - targets: ['notification-service:8004']

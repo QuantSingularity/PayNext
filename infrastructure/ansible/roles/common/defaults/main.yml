@@ -1,6 +1,12 @@
 ---
-motd_message: "Default Message for PayNext Server"
-packages:
+common_timezone: "UTC"
+common_packages:
   - git
   - curl
   - vim
+  - htop
+  - jq
+  - net-tools
+  - ca-certificates
+  - gnupg
+  - lsb-release

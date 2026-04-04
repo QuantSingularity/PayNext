@@ -1,12 +1,13 @@
-# Kubernetes provider configuration
+data "aws_eks_cluster_auth" "cluster" {
+  name = module.eks.cluster_name
+}
+
 provider "kubernetes" {
   host                   = module.eks.cluster_endpoint
   token                  = data.aws_eks_cluster_auth.cluster.token
   cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-  load_config_file       = false
 }
 
-# Helm provider configuration
 provider "helm" {
   kubernetes {
     host                   = module.eks.cluster_endpoint
@@ -15,62 +16,61 @@ provider "helm" {
   }
 }
 
-# Install NGINX Ingress Controller for handling ingress traffic
 resource "helm_release" "nginx_ingress" {
   name       = "nginx-ingress"
   repository = "https://kubernetes.github.io/ingress-nginx"
   chart      = "ingress-nginx"
-  version    = "4.2.5"
+  version    = "4.9.1"
 
-  namespace = "kube-system"
+  namespace        = "ingress-nginx"
+  create_namespace = true
 
-  values = [
-    <<EOF
-controller:
-  service:
-    type: LoadBalancer
-EOF
-  ]
+  set {
+    name  = "controller.service.type"
+    value = "LoadBalancer"
+  }
+
+  set {
+    name  = "controller.metrics.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "controller.podSecurityContext.runAsNonRoot"
+    value = "true"
+  }
 
   depends_on = [module.eks]
 }
 
-# Deploy Prometheus for monitoring and metrics
 resource "helm_release" "prometheus" {
   name       = "prometheus"
   repository = "https://prometheus-community.github.io/helm-charts"
-  chart      = "prometheus"
-  version    = "14.5.0"
+  chart      = "kube-prometheus-stack"
+  version    = "56.6.2"
 
   namespace        = "monitoring"
   create_namespace = true
 
-  values = [
-    <<EOF
-server:
-  service:
-    type: LoadBalancer
-EOF
-  ]
+  set {
+    name  = "prometheus.service.type"
+    value = "ClusterIP"
+  }
 
-  depends_on = [module.eks]
-}
+  set {
+    name  = "grafana.service.type"
+    value = "ClusterIP"
+  }
 
-# Deploy Grafana for monitoring visualization
-resource "helm_release" "grafana" {
-  name       = "grafana"
-  repository = "https://grafana.github.io/helm-charts"
-  chart      = "grafana"
-  version    = "6.16.14"
+  set {
+    name  = "grafana.adminPassword"
+    value = var.grafana_admin_password
+  }
 
-  namespace = "monitoring"
-
-  values = [
-    <<EOF
-service:
-  type: LoadBalancer
-EOF
-  ]
+  set {
+    name  = "prometheus.prometheusSpec.retention"
+    value = "30d"
+  }
 
   depends_on = [module.eks]
 }

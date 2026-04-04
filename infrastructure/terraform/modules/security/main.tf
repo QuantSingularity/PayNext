@@ -1,7 +1,8 @@
 # Security Module - Core security services for PayNext
-# This module provides encryption, secrets management, and web application firewall
 
-# KMS Key for encryption at rest
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
 resource "aws_kms_key" "paynext_key" {
   description             = "PayNext encryption key for ${var.environment}"
   deletion_window_in_days = var.kms_key_deletion_window
@@ -36,7 +37,7 @@ resource "aws_kms_key" "paynext_key" {
         Sid    = "Allow CloudWatch Logs"
         Effect = "Allow"
         Principal = {
-          Service = "logs.amazonaws.com"
+          Service = "logs.${data.aws_region.current.name}.amazonaws.com"
         }
         Action = [
           "kms:Encrypt",
@@ -98,7 +99,6 @@ resource "aws_kms_alias" "paynext_key_alias" {
   target_key_id = aws_kms_key.paynext_key.key_id
 }
 
-# Secrets Manager for secure credential storage
 resource "aws_secretsmanager_secret" "paynext_secrets" {
   count = var.enable_secrets_manager ? 1 : 0
 
@@ -108,7 +108,7 @@ resource "aws_secretsmanager_secret" "paynext_secrets" {
   recovery_window_in_days = 30
 
   replica {
-    region     = "us-east-1"
+    region     = var.dr_region
     kms_key_id = aws_kms_key.paynext_key.arn
   }
 
@@ -119,7 +119,6 @@ resource "aws_secretsmanager_secret" "paynext_secrets" {
   })
 }
 
-# Initial secret version with placeholder values
 resource "aws_secretsmanager_secret_version" "paynext_secrets_version" {
   count = var.enable_secrets_manager ? 1 : 0
 
@@ -138,7 +137,6 @@ resource "aws_secretsmanager_secret_version" "paynext_secrets_version" {
   }
 }
 
-# WAF Web ACL for application protection
 resource "aws_wafv2_web_acl" "paynext_waf" {
   count = var.enable_waf ? 1 : 0
 
@@ -149,7 +147,6 @@ resource "aws_wafv2_web_acl" "paynext_waf" {
     allow {}
   }
 
-  # AWS Managed Rules - Core Rule Set
   rule {
     name     = "AWSManagedRulesCommonRuleSet"
     priority = 1
@@ -172,7 +169,6 @@ resource "aws_wafv2_web_acl" "paynext_waf" {
     }
   }
 
-  # AWS Managed Rules - Known Bad Inputs
   rule {
     name     = "AWSManagedRulesKnownBadInputsRuleSet"
     priority = 2
@@ -195,7 +191,6 @@ resource "aws_wafv2_web_acl" "paynext_waf" {
     }
   }
 
-  # AWS Managed Rules - SQL Injection
   rule {
     name     = "AWSManagedRulesSQLiRuleSet"
     priority = 3
@@ -218,7 +213,6 @@ resource "aws_wafv2_web_acl" "paynext_waf" {
     }
   }
 
-  # Rate limiting rule
   rule {
     name     = "RateLimitRule"
     priority = 4
@@ -229,7 +223,7 @@ resource "aws_wafv2_web_acl" "paynext_waf" {
 
     statement {
       rate_based_statement {
-        limit              = 2000
+        limit              = var.waf_rate_limit
         aggregate_key_type = "IP"
       }
     }
@@ -241,7 +235,6 @@ resource "aws_wafv2_web_acl" "paynext_waf" {
     }
   }
 
-  # Geo-blocking rule (example: block traffic from high-risk countries)
   rule {
     name     = "GeoBlockRule"
     priority = 5
@@ -252,7 +245,7 @@ resource "aws_wafv2_web_acl" "paynext_waf" {
 
     statement {
       geo_match_statement {
-        country_codes = ["CN", "RU", "KP", "IR"] # Example high-risk countries
+        country_codes = var.blocked_countries
       }
     }
 
@@ -276,7 +269,19 @@ resource "aws_wafv2_web_acl" "paynext_waf" {
   }
 }
 
-# WAF Logging Configuration
+resource "aws_cloudwatch_log_group" "waf_log_group" {
+  count = var.enable_waf ? 1 : 0
+
+  name              = "/aws/wafv2/paynext-${var.environment}"
+  retention_in_days = 365
+  kms_key_id        = aws_kms_key.paynext_key.arn
+
+  tags = merge(var.tags, {
+    Name    = "PayNext-WAF-Logs-${var.environment}"
+    Purpose = "WAFLogging"
+  })
+}
+
 resource "aws_wafv2_web_acl_logging_configuration" "paynext_waf_logging" {
   count = var.enable_waf ? 1 : 0
 
@@ -296,21 +301,6 @@ resource "aws_wafv2_web_acl_logging_configuration" "paynext_waf_logging" {
   }
 }
 
-# CloudWatch Log Group for WAF logs
-resource "aws_cloudwatch_log_group" "waf_log_group" {
-  count = var.enable_waf ? 1 : 0
-
-  name              = "/aws/wafv2/paynext-${var.environment}"
-  retention_in_days = 365
-  kms_key_id        = aws_kms_key.paynext_key.arn
-
-  tags = merge(var.tags, {
-    Name    = "PayNext-WAF-Logs-${var.environment}"
-    Purpose = "WAFLogging"
-  })
-}
-
-# IAM Role for WAF logging
 resource "aws_iam_role" "waf_logging_role" {
   count = var.enable_waf ? 1 : 0
 
@@ -348,37 +338,28 @@ resource "aws_iam_role_policy" "waf_logging_policy" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Resource = aws_cloudwatch_log_group.waf_log_group[0].arn
+        Resource = "${aws_cloudwatch_log_group.waf_log_group[0].arn}:*"
       }
     ]
   })
 }
 
-# Security Hub for centralized security findings
 resource "aws_securityhub_account" "paynext_security_hub" {
+  count                    = var.enable_security_hub ? 1 : 0
   enable_default_standards = true
 }
 
-# Enable AWS Config for compliance monitoring
-resource "aws_config_configuration_recorder" "paynext_config_recorder" {
-  name     = "paynext-config-recorder-${var.environment}"
-  role_arn = aws_iam_role.config_role.arn
-
-  recording_group {
-    all_supported                 = true
-    include_global_resource_types = true
-  }
-
-  depends_on = [aws_config_delivery_channel.paynext_config_delivery_channel]
+# Random string for unique bucket naming
+resource "random_string" "bucket_suffix" {
+  length  = 8
+  special = false
+  upper   = false
 }
 
-resource "aws_config_delivery_channel" "paynext_config_delivery_channel" {
-  name           = "paynext-config-delivery-channel-${var.environment}"
-  s3_bucket_name = aws_s3_bucket.config_bucket.bucket
-}
-
-# S3 bucket for AWS Config
+# S3 bucket for AWS Config - must be created before delivery channel
 resource "aws_s3_bucket" "config_bucket" {
+  count = var.enable_config ? 1 : 0
+
   bucket        = "paynext-config-${var.environment}-${random_string.bucket_suffix.result}"
   force_destroy = true
 
@@ -389,7 +370,9 @@ resource "aws_s3_bucket" "config_bucket" {
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "config_bucket_encryption" {
-  bucket = aws_s3_bucket.config_bucket.id
+  count = var.enable_config ? 1 : 0
+
+  bucket = aws_s3_bucket.config_bucket[0].id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -400,7 +383,9 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "config_bucket_enc
 }
 
 resource "aws_s3_bucket_public_access_block" "config_bucket_pab" {
-  bucket = aws_s3_bucket.config_bucket.id
+  count = var.enable_config ? 1 : 0
+
+  bucket = aws_s3_bucket.config_bucket[0].id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -409,14 +394,54 @@ resource "aws_s3_bucket_public_access_block" "config_bucket_pab" {
 }
 
 resource "aws_s3_bucket_versioning" "config_bucket_versioning" {
-  bucket = aws_s3_bucket.config_bucket.id
+  count = var.enable_config ? 1 : 0
+
+  bucket = aws_s3_bucket.config_bucket[0].id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
-# IAM Role for AWS Config
+resource "aws_s3_bucket_policy" "config_bucket_policy" {
+  count = var.enable_config ? 1 : 0
+
+  bucket = aws_s3_bucket.config_bucket[0].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AWSConfigBucketPermissionsCheck"
+        Effect = "Allow"
+        Principal = {
+          Service = "config.amazonaws.com"
+        }
+        Action   = "s3:GetBucketAcl"
+        Resource = aws_s3_bucket.config_bucket[0].arn
+      },
+      {
+        Sid    = "AWSConfigBucketDelivery"
+        Effect = "Allow"
+        Principal = {
+          Service = "config.amazonaws.com"
+        }
+        Action   = "s3:PutObject"
+        Resource = "${aws_s3_bucket.config_bucket[0].arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/Config/*"
+        Condition = {
+          StringEquals = {
+            "s3:x-amz-acl" = "bucket-owner-full-control"
+          }
+        }
+      }
+    ]
+  })
+
+  depends_on = [aws_s3_bucket_public_access_block.config_bucket_pab]
+}
+
 resource "aws_iam_role" "config_role" {
+  count = var.enable_config ? 1 : 0
+
   name = "paynext-config-role-${var.environment}"
 
   assume_role_policy = jsonencode({
@@ -436,13 +461,17 @@ resource "aws_iam_role" "config_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "config_role_policy" {
-  role       = aws_iam_role.config_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/ConfigRole"
+  count = var.enable_config ? 1 : 0
+
+  role       = aws_iam_role.config_role[0].name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWS_ConfigRole"
 }
 
 resource "aws_iam_role_policy" "config_s3_policy" {
+  count = var.enable_config ? 1 : 0
+
   name = "paynext-config-s3-policy-${var.environment}"
-  role = aws_iam_role.config_role.id
+  role = aws_iam_role.config_role[0].id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -454,7 +483,7 @@ resource "aws_iam_role_policy" "config_s3_policy" {
           "s3:GetBucketLocation",
           "s3:ListBucket"
         ]
-        Resource = aws_s3_bucket.config_bucket.arn
+        Resource = aws_s3_bucket.config_bucket[0].arn
       },
       {
         Effect = "Allow"
@@ -462,19 +491,46 @@ resource "aws_iam_role_policy" "config_s3_policy" {
           "s3:GetObject",
           "s3:PutObject"
         ]
-        Resource = "${aws_s3_bucket.config_bucket.arn}/*"
+        Resource = "${aws_s3_bucket.config_bucket[0].arn}/*"
       }
     ]
   })
 }
 
-# Random string for unique bucket naming
-resource "random_string" "bucket_suffix" {
-  length  = 8
-  special = false
-  upper   = false
+# Delivery channel must be created before the recorder starts
+resource "aws_config_delivery_channel" "paynext_config_delivery_channel" {
+  count = var.enable_config ? 1 : 0
+
+  name           = "paynext-config-delivery-channel-${var.environment}"
+  s3_bucket_name = aws_s3_bucket.config_bucket[0].bucket
+
+  snapshot_delivery_properties {
+    delivery_frequency = var.config_delivery_frequency
+  }
+
+  depends_on = [
+    aws_s3_bucket_policy.config_bucket_policy,
+    aws_config_configuration_recorder.paynext_config_recorder
+  ]
 }
 
-# Data sources
-data "aws_caller_identity" "current" {}
-data "aws_region" "current" {}
+resource "aws_config_configuration_recorder" "paynext_config_recorder" {
+  count = var.enable_config ? 1 : 0
+
+  name     = "paynext-config-recorder-${var.environment}"
+  role_arn = aws_iam_role.config_role[0].arn
+
+  recording_group {
+    all_supported                 = true
+    include_global_resource_types = true
+  }
+}
+
+resource "aws_config_configuration_recorder_status" "paynext_config_recorder_status" {
+  count = var.enable_config ? 1 : 0
+
+  name       = aws_config_configuration_recorder.paynext_config_recorder[0].name
+  is_enabled = true
+
+  depends_on = [aws_config_delivery_channel.paynext_config_delivery_channel]
+}

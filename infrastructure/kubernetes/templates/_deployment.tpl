@@ -1,50 +1,61 @@
 {{- define "paynext.deployment" -}}
-{{- $service := .Values.services.{{ .serviceName }} -}}
-{{- $fullName := include "paynext.fullname" . -}}
+{{- $serviceName := .serviceName -}}
+{{- $service := index .Values.services $serviceName -}}
+{{- $root := .root -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .serviceName }}
+  name: {{ $serviceName }}
+  namespace: {{ $root.Values.global.namespace | default $root.Release.Namespace }}
   labels:
-    {{- include "paynext.labels" . | nindent 4 }}
-    app.kubernetes.io/component: {{ .serviceName }}
+    {{- include "paynext.labels" $root | nindent 4 }}
+    app.kubernetes.io/component: {{ $serviceName }}
 spec:
   replicas: {{ $service.replicaCount | default 1 }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "paynext.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
-      app.kubernetes.io/component: {{ .serviceName }}
+      {{- include "paynext.selectorLabels" $root | nindent 6 }}
+      app.kubernetes.io/component: {{ $serviceName }}
   template:
     metadata:
       labels:
-        {{- include "paynext.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: {{ .serviceName }}
+        {{- include "paynext.selectorLabels" $root | nindent 8 }}
+        app.kubernetes.io/component: {{ $serviceName }}
+      annotations:
+        checksum/config: {{ $service | toJson | sha256sum }}
     spec:
-      {{- with .Values.imagePullSecrets }}
+      {{- with $root.Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "paynext.serviceAccountName" . }}
+      serviceAccountName: {{ include "paynext.serviceAccountName" $root }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        runAsNonRoot: {{ $root.Values.global.security.securityContext.runAsNonRoot | default true }}
+        runAsUser: {{ $root.Values.global.security.securityContext.runAsUser | default 10001 }}
+        fsGroup: {{ $root.Values.global.security.securityContext.fsGroup | default 10001 }}
       containers:
-        - name: {{ .serviceName }}
+        - name: {{ $serviceName }}
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ $service.image.repository }}:{{ $service.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ $service.image.pullPolicy | default .Values.image.pullPolicy }}
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: false
+          image: "{{ $service.image.repository }}:{{ $service.image.tag | default $root.Chart.AppVersion }}"
+          imagePullPolicy: {{ $service.image.pullPolicy | default $root.Values.image.pullPolicy }}
           ports:
-            {{- range $service.ports }}
+            {{- range $service.service.ports }}
             - name: {{ .name }}
-              containerPort: {{ .containerPort }}
-              protocol: {{ .protocol | default "TCP" }}
+              containerPort: {{ .targetPort }}
+              protocol: TCP
             {{- end }}
+          {{- with $service.env }}
           env:
-            {{- range $service.env }}
+            {{- range . }}
             - name: {{ .name }}
               value: {{ .value | quote }}
             {{- end }}
+          {{- end }}
           {{- with $service.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
@@ -57,15 +68,15 @@ spec:
           readinessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-      {{- with .Values.nodeSelector }}
+      {{- with $root.Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
+      {{- with $root.Values.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.tolerations }}
+      {{- with $root.Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}

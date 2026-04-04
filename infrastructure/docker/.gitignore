@@ -1,0 +1,7 @@
+.env
+*.env.local
+*.log
+postgres-data/
+redis-data/
+prometheus-data/
+grafana-data/

@@ -601,8 +601,13 @@ resource "aws_network_acl" "database" {
 
 # VPC Endpoints for secure AWS service access
 resource "aws_vpc_endpoint" "s3" {
-  vpc_id       = aws_vpc.paynext_vpc.id
-  service_name = "com.amazonaws.${data.aws_region.current.name}.s3"
+  vpc_id            = aws_vpc.paynext_vpc.id
+  service_name      = "com.amazonaws.${data.aws_region.current.name}.s3"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = concat(
+    aws_route_table.private[*].id,
+    [aws_route_table.database.id]
+  )
 
   tags = merge(var.tags, {
     Name = "PayNext-S3-VPC-Endpoint-${var.environment}"
@@ -610,8 +615,10 @@ resource "aws_vpc_endpoint" "s3" {
 }
 
 resource "aws_vpc_endpoint" "dynamodb" {
-  vpc_id       = aws_vpc.paynext_vpc.id
-  service_name = "com.amazonaws.${data.aws_region.current.name}.dynamodb"
+  vpc_id            = aws_vpc.paynext_vpc.id
+  service_name      = "com.amazonaws.${data.aws_region.current.name}.dynamodb"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = aws_route_table.private[*].id
 
   tags = merge(var.tags, {
     Name = "PayNext-DynamoDB-VPC-Endpoint-${var.environment}"
@@ -619,11 +626,12 @@ resource "aws_vpc_endpoint" "dynamodb" {
 }
 
 resource "aws_vpc_endpoint" "ec2" {
-  vpc_id             = aws_vpc.paynext_vpc.id
-  service_name       = "com.amazonaws.${data.aws_region.current.name}.ec2"
-  vpc_endpoint_type  = "Interface"
-  subnet_ids         = aws_subnet.private[*].id
-  security_group_ids = [aws_security_group.vpc_endpoints.id]
+  vpc_id              = aws_vpc.paynext_vpc.id
+  service_name        = "com.amazonaws.${data.aws_region.current.name}.ec2"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  private_dns_enabled = true
 
   policy = jsonencode({
     Version = "2012-10-17"

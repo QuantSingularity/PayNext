@@ -1,19 +1,25 @@
 ---
-# .ansible-lint configuration
+profile: production
+
 skip_list:
-  - 'yaml[line-length]'  # Allow long lines in some cases
-  - 'name[casing]'  # Allow flexible task naming
+  - yaml[line-length]
+  - name[casing]
+  - no-changed-when
 
 warn_list:
   - experimental
+  - role-name
 
 exclude_paths:
   - .cache/
   - .git/
-  - roles/external/
 
-# Enable offline mode for faster linting
 offline: false
-
-# Use default rules
 use_default_rules: true
+
+kinds:
+  - playbooks: "playbooks/*.yml"
+  - tasks: "roles/*/tasks/*.yml"
+  - handlers: "roles/*/handlers/*.yml"
+  - vars: "roles/*/vars/*.yml"
+  - defaults: "roles/*/defaults/*.yml"

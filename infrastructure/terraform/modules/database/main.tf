@@ -328,33 +328,52 @@ resource "aws_iam_role_policy_attachment" "rds_enhanced_monitoring" {
 
 # RDS Proxy for connection pooling and security
 resource "aws_db_proxy" "paynext_proxy" {
+  count = var.enable_rds_proxy ? 1 : 0
+
   name          = "paynext-proxy-${var.environment}"
   engine_family = "POSTGRESQL"
   auth {
     auth_scheme = "SECRETS"
     secret_arn  = aws_secretsmanager_secret.db_master_password.arn
+    iam_auth    = "DISABLED"
   }
 
-  role_arn               = aws_iam_role.rds_proxy.arn
+  role_arn               = aws_iam_role.rds_proxy[0].arn
   vpc_subnet_ids         = var.database_subnet_ids
-  vpc_security_group_ids = [aws_security_group.rds_proxy.id]
+  vpc_security_group_ids = [aws_security_group.rds_proxy[0].id]
 
-  target {
-    db_cluster_identifier = aws_rds_cluster.paynext_cluster.cluster_identifier
-  }
-
-  require_tls                  = true
-  idle_client_timeout          = 1800
-  max_connections_percent      = 100
-  max_idle_connections_percent = 50
+  require_tls         = true
+  idle_client_timeout = 1800
 
   tags = merge(var.tags, {
     Name = "PayNext-RDS-Proxy-${var.environment}"
   })
 }
 
+resource "aws_db_proxy_default_target_group" "paynext_proxy_tg" {
+  count = var.enable_rds_proxy ? 1 : 0
+
+  db_proxy_name = aws_db_proxy.paynext_proxy[0].name
+
+  connection_pool_config {
+    connection_borrow_timeout    = 120
+    max_connections_percent      = 100
+    max_idle_connections_percent = 50
+  }
+}
+
+resource "aws_db_proxy_target" "paynext_proxy_target" {
+  count = var.enable_rds_proxy ? 1 : 0
+
+  db_cluster_identifier = aws_rds_cluster.paynext_cluster.cluster_identifier
+  db_proxy_name         = aws_db_proxy.paynext_proxy[0].name
+  target_group_name     = aws_db_proxy_default_target_group.paynext_proxy_tg[0].name
+}
+
 # Security Group for RDS Proxy
 resource "aws_security_group" "rds_proxy" {
+  count = var.enable_rds_proxy ? 1 : 0
+
   name_prefix = "paynext-rds-proxy-${var.environment}-"
   vpc_id      = var.vpc_id
   description = "Security group for PayNext RDS proxy"
@@ -394,6 +413,8 @@ resource "aws_security_group" "rds_proxy" {
 
 # IAM Role for RDS Proxy
 resource "aws_iam_role" "rds_proxy" {
+  count = var.enable_rds_proxy ? 1 : 0
+
   name = "paynext-rds-proxy-${var.environment}"
 
   assume_role_policy = jsonencode({
@@ -413,8 +434,10 @@ resource "aws_iam_role" "rds_proxy" {
 }
 
 resource "aws_iam_role_policy" "rds_proxy" {
+  count = var.enable_rds_proxy ? 1 : 0
+
   name = "paynext-rds-proxy-policy-${var.environment}"
-  role = aws_iam_role.rds_proxy.id
+  role = aws_iam_role.rds_proxy[0].id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -443,38 +466,8 @@ resource "aws_iam_role_policy" "rds_proxy" {
   })
 }
 
-# Cross-region backup (if enabled)
-resource "aws_rds_cluster" "paynext_cluster_backup" {
-  count = var.enable_cross_region_backup ? 1 : 0
-
-  cluster_identifier = "paynext-cluster-backup-${var.environment}"
-  engine             = var.db_engine
-  engine_version     = var.db_engine_version
-
-  # Restore from snapshot
-  snapshot_identifier = aws_rds_cluster.paynext_cluster.final_snapshot_identifier
-
-  # Network (in DR region)
-  db_subnet_group_name   = "default"      # Assuming default subnet group exists in DR region
-  vpc_security_group_ids = ["sg-default"] # Would need to be created in DR region
-
-  # Backup settings
-  backup_retention_period = var.backup_retention_days
-  copy_tags_to_snapshot   = true
-  deletion_protection     = false
-  skip_final_snapshot     = true
-
-  # Encryption
-  storage_encrypted = var.enable_encryption_at_rest
-  kms_key_id        = var.kms_key_id # Would need DR region KMS key
-
-  tags = merge(var.tags, {
-    Name    = "PayNext-DB-Cluster-Backup-${var.environment}"
-    Purpose = "DisasterRecovery"
-  })
-
-  provider = aws.dr_region
-}
+# Cross-region backup via AWS Backup copy action (handled in backup plan below)
+# Automated snapshots are replicated to the DR region via the backup plan copy_action.
 
 # CloudWatch Alarms for database monitoring
 resource "aws_cloudwatch_metric_alarm" "database_cpu" {
@@ -549,6 +542,8 @@ resource "aws_backup_vault" "paynext_backup_vault" {
   name        = "paynext-backup-vault-${var.environment}"
   kms_key_arn = var.kms_key_id
 
+  force_destroy = var.environment != "prod"
+
   tags = merge(var.tags, {
     Name = "PayNext-Backup-Vault-${var.environment}"
   })
@@ -569,12 +564,15 @@ resource "aws_backup_plan" "paynext_backup_plan" {
       delete_after       = var.backup_retention_days
     }
 
-    copy_action {
-      destination_vault_arn = aws_backup_vault.paynext_backup_vault.arn
+    dynamic "copy_action" {
+      for_each = var.enable_cross_region_backup ? [1] : []
+      content {
+        destination_vault_arn = "arn:aws:backup:${var.dr_region}:${data.aws_caller_identity.current.account_id}:backup-vault/Default"
 
-      lifecycle {
-        cold_storage_after = 30
-        delete_after       = var.backup_retention_days
+        lifecycle {
+          cold_storage_after = 30
+          delete_after       = var.backup_retention_days
+        }
       }
     }
   }

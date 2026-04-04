@@ -6,6 +6,17 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 data "aws_partition" "current" {}
 
+
+# Locals for resolved resource IDs
+locals {
+  cloudtrail_bucket_id = var.s3_bucket_id != "" ? var.s3_bucket_id : (
+    var.enable_cloudtrail ? aws_s3_bucket.cloudtrail_bucket[0].id : ""
+  )
+  cloudtrail_bucket_arn = var.s3_bucket_id != "" ? "arn:aws:s3:::${var.s3_bucket_id}" : (
+    var.enable_cloudtrail ? aws_s3_bucket.cloudtrail_bucket[0].arn : ""
+  )
+}
+
 # CloudWatch Log Groups for centralized logging
 resource "aws_cloudwatch_log_group" "application_logs" {
   name              = "/aws/paynext/${var.environment}/application"
@@ -56,7 +67,7 @@ resource "aws_cloudwatch_log_group" "performance_logs" {
 
 # CloudTrail for comprehensive API logging
 resource "aws_s3_bucket" "cloudtrail_bucket" {
-  count = var.enable_cloudtrail ? 1 : 0
+  count = (var.enable_cloudtrail && var.s3_bucket_id == "") ? 1 : 0
 
   bucket        = "paynext-cloudtrail-${var.environment}-${random_string.bucket_suffix.result}"
   force_destroy = false

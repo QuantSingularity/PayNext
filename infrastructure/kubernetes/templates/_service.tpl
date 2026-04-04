@@ -1,25 +1,28 @@
 {{- define "paynext.service" -}}
-{{- $service := .Values.services.{{ .serviceName }} -}}
+{{- $serviceName := .serviceName -}}
+{{- $service := index .Values.services $serviceName -}}
+{{- $root := .root -}}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .serviceName }}
+  name: {{ $serviceName }}
+  namespace: {{ $root.Values.global.namespace | default $root.Release.Namespace }}
   labels:
-    {{- include "paynext.labels" . | nindent 4 }}
-    app.kubernetes.io/component: {{ .serviceName }}
+    {{- include "paynext.labels" $root | nindent 4 }}
+    app.kubernetes.io/component: {{ $serviceName }}
 spec:
   type: {{ $service.service.type | default "ClusterIP" }}
   ports:
     {{- range $service.service.ports }}
-    - port: {{ .port }}
+    - name: {{ .name }}
+      port: {{ .port }}
       targetPort: {{ .targetPort }}
-      protocol: {{ .protocol | default "TCP" }}
-      {{- if .nodePort }}
+      protocol: TCP
+      {{- if and (eq $service.service.type "NodePort") .nodePort }}
       nodePort: {{ .nodePort }}
       {{- end }}
     {{- end }}
   selector:
-    app.kubernetes.io/name: {{ include "paynext.name" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/component: {{ .serviceName }}
+    {{- include "paynext.selectorLabels" $root | nindent 4 }}
+    app.kubernetes.io/component: {{ $serviceName }}
 {{- end -}}

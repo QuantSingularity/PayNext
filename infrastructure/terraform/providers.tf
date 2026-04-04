@@ -25,8 +25,7 @@ terraform {
   }
 
   # Backend configuration for remote state management
-  # For local development, state will be stored locally
-  # For production, uncomment and configure S3 backend:
+  # Uncomment and configure for production:
   # backend "s3" {
   #   bucket         = "paynext-terraform-state-ENVIRONMENT"
   #   key            = "infrastructure/terraform.tfstate"
@@ -37,11 +36,9 @@ terraform {
   # }
 }
 
-# Define the AWS provider with the specified region
 provider "aws" {
   region = var.aws_region
 
-  # Default tags applied to all resources
   default_tags {
     tags = {
       Project     = "PayNext"
@@ -53,13 +50,10 @@ provider "aws" {
   }
 }
 
-# DR region provider for cross-region backup and replication
-# Used by storage and database modules for disaster recovery
 provider "aws" {
   alias  = "dr_region"
   region = var.dr_region
 
-  # Default tags applied to all DR resources
   default_tags {
     tags = {
       Project     = "PayNext"
@@ -72,30 +66,27 @@ provider "aws" {
   }
 }
 
-# Define the Kubernetes provider for managing Kubernetes resources
-# Note: This requires the EKS cluster to be created first
-provider "kubernetes" {
-  host                   = module.kubernetes.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.kubernetes.cluster_ca_certificate)
-
-  exec {
-    api_version = "client.authentication.k8s.io/v1"  # Updated from deprecated v1beta1
-    command     = "aws"
-    args        = ["eks", "get-token", "--cluster-name", module.kubernetes.cluster_name]
-  }
+# Use data source for EKS auth to avoid chicken-and-egg provider issue
+# These providers require the EKS cluster to exist first.
+# Run: terraform apply -target=module.kubernetes before using these providers.
+data "aws_eks_cluster" "paynext" {
+  name = var.cluster_name
 }
 
-# Define the Helm provider for managing Helm charts on Kubernetes
-# Note: This requires the EKS cluster to be created first
+data "aws_eks_cluster_auth" "paynext" {
+  name = var.cluster_name
+}
+
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.paynext.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.paynext.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.paynext.token
+}
+
 provider "helm" {
   kubernetes {
-    host                   = module.kubernetes.cluster_endpoint
-    cluster_ca_certificate = base64decode(module.kubernetes.cluster_ca_certificate)
-
-    exec {
-      api_version = "client.authentication.k8s.io/v1"  # Updated from deprecated v1beta1
-      command     = "aws"
-      args        = ["eks", "get-token", "--cluster-name", module.kubernetes.cluster_name]
-    }
+    host                   = data.aws_eks_cluster.paynext.endpoint
+    cluster_ca_certificate = base64decode(data.aws_eks_cluster.paynext.certificate_authority[0].data)
+    token                  = data.aws_eks_cluster_auth.paynext.token
   }
 }

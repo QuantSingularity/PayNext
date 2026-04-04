@@ -1,0 +1,22 @@
+FROM eclipse-temurin:17-jdk-alpine AS builder
+WORKDIR /workspace
+COPY gradlew* gradle* build.gradle* settings.gradle* ./
+RUN chmod +x gradlew && ./gradlew dependencies --no-daemon 2>/dev/null || true
+COPY src ./src
+RUN ./gradlew bootJar --no-daemon -x test && \
+    java -Djarmode=layertools -jar build/libs/*.jar extract
+
+FROM eclipse-temurin:17-jre-alpine
+RUN addgroup -S paynext && adduser -S -G paynext paynext
+RUN apk add --no-cache curl
+WORKDIR /app
+COPY --from=builder --chown=paynext:paynext /workspace/dependencies/ ./
+COPY --from=builder --chown=paynext:paynext /workspace/spring-boot-loader/ ./
+COPY --from=builder --chown=paynext:paynext /workspace/snapshot-dependencies/ ./
+COPY --from=builder --chown=paynext:paynext /workspace/application/ ./
+USER paynext
+EXPOSE 8000
+ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
+  CMD curl -f http://localhost:8000/actuator/health || exit 1
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS org.springframework.boot.loader.JarLauncher"]

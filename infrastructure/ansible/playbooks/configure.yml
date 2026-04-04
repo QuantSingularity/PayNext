@@ -1,1 +1,6 @@
 ---
+- name: Configure PayNext Infrastructure
+  hosts: all
+  become: yes
+  roles:
+    - role: common

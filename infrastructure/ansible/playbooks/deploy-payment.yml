@@ -2,8 +2,14 @@
 - name: Deploy Payment Service
   hosts: payment_service
   become: true
+  pre_tasks:
+    - name: Validate required environment variables
+      fail:
+        msg: "DB_PASSWORD environment variable must be set"
+      when: lookup('env', 'DB_PASSWORD') | length == 0
   roles:
     - role: payment-service
   vars:
     eureka_server_url: "http://eureka-server:8001/eureka"
     jwt_secret: "{{ lookup('env', 'JWT_SECRET') }}"
+    database_password: "{{ lookup('env', 'DB_PASSWORD') }}"

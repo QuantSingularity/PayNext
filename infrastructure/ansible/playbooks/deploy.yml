@@ -2,37 +2,71 @@
 - name: Deploy PayNext Application
   hosts: all
   become: yes
+  vars:
+    deploy_dir: "/opt/paynext"
+    compose_file: "{{ deploy_dir }}/docker-compose.yml"
+    health_check_url: "http://localhost:8002/actuator/health"
+    health_check_retries: 12
+    health_check_delay: 10
   tasks:
-    - name: Update and upgrade apt packages
+    - name: Update apt cache
       apt:
         update_cache: yes
-        upgrade: dist
-    - name: Install Docker
+        cache_valid_time: 3600
+
+    - name: Install required packages
       apt:
-        name: docker.io
+        name:
+          - docker.io
+          - python3-pip
+          - python3-docker
         state: present
-    - name: Install Docker Compose
+
+    - name: Install Docker Compose plugin
       apt:
-        name: docker-compose
+        name: docker-compose-v2
         state: present
-    - name: Ensure Docker service is running
+      ignore_errors: yes
+
+    - name: Ensure Docker service is running and enabled
       service:
         name: docker
         state: started
         enabled: true
-    - name: Pull and run PayNext Docker containers
-      docker_compose:
-        project_src: /path/to/your/docker-compose.yml
+
+    - name: Create deployment directory
+      file:
+        path: "{{ deploy_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Copy docker-compose file to target
+      template:
+        src: "{{ playbook_dir }}//opt/paynext/docker-compose.yml"
+        dest: "{{ compose_file }}"
+        mode: "0644"
+
+    - name: Pull PayNext Docker images
+      community.docker.docker_compose_v2:
+        project_src: "{{ deploy_dir }}"
+        pull: always
+
+    - name: Start PayNext services
+      community.docker.docker_compose_v2:
+        project_src: "{{ deploy_dir }}"
         state: present
-        build: yes
-    - name: Verify the deployment
+
+    - name: Wait for API Gateway to become healthy
       uri:
-        url: "http://localhost:8002/health"
+        url: "{{ health_check_url }}"
         method: GET
         return_content: yes
         status_code: 200
-      register: result
-    - name: Debug deployment result
+      register: health_result
+      retries: "{{ health_check_retries }}"
+      delay: "{{ health_check_delay }}"
+      until: health_result.status == 200
+
+    - name: Confirm deployment success
       debug:
-        msg: "Deployment successful. Response code: {{ result.status }}"
-      when: result.status == 200
+        msg: "Deployment successful. API Gateway is healthy (HTTP {{ health_result.status }})."

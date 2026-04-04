@@ -1,10 +1,3 @@
-{{- define "paynext.labels" -}}
-app.kubernetes.io/name: {{ .Release.Name }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
-{{- end -}}
-
 {{- define "paynext.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
@@ -18,6 +11,10 @@ helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 {{- end -}}
 {{- end -}}
 
+{{- define "paynext.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
 {{- define "paynext.labels" -}}
 helm.sh/chart: {{ include "paynext.chart" . }}
 {{ include "paynext.selectorLabels" . }}
@@ -25,10 +22,6 @@ helm.sh/chart: {{ include "paynext.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end -}}
-
-{{- define "paynext.chart" -}}
-{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{- define "paynext.selectorLabels" -}}
@@ -80,24 +73,24 @@ resources:
 {{- end -}}
 
 {{- define "paynext.probes" -}}
-{{- if .livenessProbe.enabled -}}
+{{- if .livenessProbe -}}
 livenessProbe:
   httpGet:
-    path: /actuator/health
-    port: {{ .service.port }}
-  initialDelaySeconds: {{ .livenessProbe.initialDelaySeconds }}
-  periodSeconds: {{ .livenessProbe.periodSeconds }}
-  timeoutSeconds: {{ .livenessProbe.timeoutSeconds }}
-  failureThreshold: {{ .livenessProbe.failureThreshold }}
+    path: {{ .livenessProbe.httpGet.path | default "/actuator/health/liveness" }}
+    port: {{ .livenessProbe.httpGet.port | default "http" }}
+  initialDelaySeconds: {{ .livenessProbe.initialDelaySeconds | default 60 }}
+  periodSeconds: {{ .livenessProbe.periodSeconds | default 10 }}
+  timeoutSeconds: {{ .livenessProbe.timeoutSeconds | default 5 }}
+  failureThreshold: {{ .livenessProbe.failureThreshold | default 5 }}
 {{- end -}}
-{{- if .readinessProbe.enabled -}}
+{{- if .readinessProbe -}}
 readinessProbe:
   httpGet:
-    path: /actuator/health
-    port: {{ .service.port }}
-  initialDelaySeconds: {{ .readinessProbe.initialDelaySeconds }}
-  periodSeconds: {{ .readinessProbe.periodSeconds }}
-  timeoutSeconds: {{ .readinessProbe.timeoutSeconds }}
-  failureThreshold: {{ .readinessProbe.failureThreshold }}
+    path: {{ .readinessProbe.httpGet.path | default "/actuator/health/readiness" }}
+    port: {{ .readinessProbe.httpGet.port | default "http" }}
+  initialDelaySeconds: {{ .readinessProbe.initialDelaySeconds | default 30 }}
+  periodSeconds: {{ .readinessProbe.periodSeconds | default 10 }}
+  timeoutSeconds: {{ .readinessProbe.timeoutSeconds | default 5 }}
+  failureThreshold: {{ .readinessProbe.failureThreshold | default 3 }}
 {{- end -}}
 {{- end -}}

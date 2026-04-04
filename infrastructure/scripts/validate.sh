@@ -59,9 +59,9 @@ check_security_configuration() {
     local issues=0
 
     # Check for hardcoded secrets
-    if grep -r "password\|secret\|key" "$TERRAFORM_DIR" --include="*.tf" | grep -v "variable\|output\|data\|resource"; then
+    if grep -r "password\|secret\|key" "$TERRAFORM_DIR" --include="*.tf" 2>/dev/null | grep -v "variable\|output\|data\|resource" 2>/dev/null; then
         warn "Potential hardcoded secrets found"
-        ((issues++))
+        issues=$((issues + 1))
     fi
 
     # Check for public access
@@ -70,9 +70,9 @@ check_security_configuration() {
     fi
 
     # Check encryption settings
-    if ! grep -r "encrypted.*=.*true" "$TERRAFORM_DIR" --include="*.tf" > /dev/null; then
+    if ! grep -r "encrypted.*=.*true" "$TERRAFORM_DIR" --include="*.tf" > /dev/null 2>&1; then
         warn "No encryption settings found"
-        ((issues++))
+        issues=$((issues + 1))
     fi
 
     if [[ $issues -eq 0 ]]; then
@@ -123,25 +123,25 @@ check_best_practices() {
     # Check for provider version constraints
     if ! grep -r "required_providers" "$TERRAFORM_DIR" --include="*.tf" > /dev/null; then
         warn "No provider version constraints found"
-        ((issues++))
+        issues=$((issues + 1))
     fi
 
     # Check for resource tagging
     if ! grep -r "tags.*=" "$TERRAFORM_DIR" --include="*.tf" > /dev/null; then
         warn "No resource tagging found"
-        ((issues++))
+        issues=$((issues + 1))
     fi
 
     # Check for outputs
     if [[ ! -f "$TERRAFORM_DIR/outputs.tf" ]]; then
         warn "No outputs.tf file found"
-        ((issues++))
+        issues=$((issues + 1))
     fi
 
     # Check for variables
     if [[ ! -f "$TERRAFORM_DIR/variables.tf" ]]; then
         warn "No variables.tf file found"
-        ((issues++))
+        issues=$((issues + 1))
     fi
 
     if [[ $issues -eq 0 ]]; then

@@ -253,7 +253,7 @@ output "connection_info" {
   value = {
     primary_endpoint = aws_rds_cluster.paynext_cluster.endpoint
     reader_endpoint  = aws_rds_cluster.paynext_cluster.reader_endpoint
-    proxy_endpoint   = var.enable_rds_proxy ? aws_db_proxy.paynext_proxy.endpoint : null
+    proxy_endpoint   = var.enable_rds_proxy ? aws_db_proxy.paynext_proxy[0].endpoint : null
     port             = aws_rds_cluster.paynext_cluster.port
     database_name    = aws_rds_cluster.paynext_cluster.database_name
     engine           = aws_rds_cluster.paynext_cluster.engine

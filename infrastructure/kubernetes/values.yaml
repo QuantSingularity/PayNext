@@ -1,12 +1,10 @@
 global:
   namespace: paynext
   ingressClass: nginx
-  # Financial industry compliance settings
   compliance:
     pci: true
     gdpr: true
     sox: true
-  # Enhanced security settings
   security:
     networkPolicies: true
     podSecurityPolicies: true
@@ -21,33 +19,27 @@ global:
 image:
   repository: quantsingularity
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
 serviceAccount:
-  # Specifies whether a service account should be created
   create: true
-  # Annotations to add to the service account
   annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-podSecurityContext: {}
-  # fsGroup: 2000
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  fsGroup: 10001
 
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false
 
 nodeSelector: {}
-
 tolerations: []
-
 affinity: {}
 
 # ==============================================================================
@@ -56,17 +48,16 @@ affinity: {}
 services:
   api-gateway:
     enabled: true
-    replicaCount: 1
+    replicaCount: 2
     image:
       repository: quantsingularity/backend-api-gateway
       tag: latest
     service:
-      type: NodePort
+      type: ClusterIP
       ports:
         - name: http
           port: 8002
           targetPort: 8002
-          nodePort: 30080
     resources:
       requests:
         memory: "256Mi"
@@ -77,7 +68,7 @@ services:
     livenessProbe:
       httpGet:
         path: /actuator/health/liveness
-        port: http
+        port: 8002
       initialDelaySeconds: 60
       periodSeconds: 10
       timeoutSeconds: 5
@@ -85,7 +76,7 @@ services:
     readinessProbe:
       httpGet:
         path: /actuator/health/readiness
-        port: http
+        port: 8002
       initialDelaySeconds: 30
       periodSeconds: 10
       timeoutSeconds: 5
@@ -93,17 +84,16 @@ services:
 
   eureka-server:
     enabled: true
-    replicaCount: 1
+    replicaCount: 2
     image:
       repository: quantsingularity/backend-eureka-server
       tag: latest
     service:
-      type: NodePort
+      type: ClusterIP
       ports:
         - name: http
           port: 8001
           targetPort: 8001
-          nodePort: 30081
     resources:
       requests:
         memory: "256Mi"
@@ -114,7 +104,7 @@ services:
     livenessProbe:
       httpGet:
         path: /actuator/health/liveness
-        port: http
+        port: 8001
       initialDelaySeconds: 60
       periodSeconds: 10
       timeoutSeconds: 5
@@ -122,7 +112,7 @@ services:
     readinessProbe:
       httpGet:
         path: /actuator/health/readiness
-        port: http
+        port: 8001
       initialDelaySeconds: 30
       periodSeconds: 10
       timeoutSeconds: 5
@@ -130,28 +120,43 @@ services:
 
   fintech-payment-frontend:
     enabled: true
-    replicaCount: 1
+    replicaCount: 2
     image:
       repository: quantsingularity/frontend-fintech-payment
       tag: latest
     service:
-      type: NodePort
+      type: ClusterIP
       ports:
         - name: http
           port: 80
           targetPort: 80
-          nodePort: 30000
     resources:
       requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
         memory: "256Mi"
         cpu: "250m"
-      limits:
-        memory: "512Mi"
-        cpu: "500m"
+    livenessProbe:
+      httpGet:
+        path: /
+        port: 80
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /
+        port: 80
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
 
   notification-service:
     enabled: true
-    replicaCount: 1
+    replicaCount: 2
     image:
       repository: quantsingularity/backend-notification-service
       tag: latest
@@ -171,7 +176,7 @@ services:
     livenessProbe:
       httpGet:
         path: /actuator/health/liveness
-        port: http
+        port: 8004
       initialDelaySeconds: 60
       periodSeconds: 10
       timeoutSeconds: 5
@@ -179,7 +184,7 @@ services:
     readinessProbe:
       httpGet:
         path: /actuator/health/readiness
-        port: http
+        port: 8004
       initialDelaySeconds: 30
       periodSeconds: 10
       timeoutSeconds: 5
@@ -187,7 +192,7 @@ services:
 
   payment-service:
     enabled: true
-    replicaCount: 1
+    replicaCount: 2
     image:
       repository: quantsingularity/backend-payment-service
       tag: latest
@@ -207,7 +212,7 @@ services:
     livenessProbe:
       httpGet:
         path: /actuator/health/liveness
-        port: http
+        port: 8003
       initialDelaySeconds: 60
       periodSeconds: 10
       timeoutSeconds: 5
@@ -215,7 +220,7 @@ services:
     readinessProbe:
       httpGet:
         path: /actuator/health/readiness
-        port: http
+        port: 8003
       initialDelaySeconds: 30
       periodSeconds: 10
       timeoutSeconds: 5
@@ -223,7 +228,7 @@ services:
 
   user-service:
     enabled: true
-    replicaCount: 1
+    replicaCount: 2
     image:
       repository: quantsingularity/backend-user-service
       tag: latest
@@ -243,7 +248,7 @@ services:
     livenessProbe:
       httpGet:
         path: /actuator/health/liveness
-        port: http
+        port: 8000
       initialDelaySeconds: 60
       periodSeconds: 10
       timeoutSeconds: 5
@@ -251,8 +256,17 @@ services:
     readinessProbe:
       httpGet:
         path: /actuator/health/readiness
-        port: http
+        port: 8000
       initialDelaySeconds: 30
       periodSeconds: 10
       timeoutSeconds: 5
       failureThreshold: 3
+
+# ==============================================================================
+# Backup Configuration
+# ==============================================================================
+backup:
+  storageClassName: "standard"
+  storageSize: "10Gi"
+  schedule: "0 1 * * *"
+  retentionDays: 30

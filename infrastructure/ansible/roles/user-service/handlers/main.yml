@@ -1,17 +1,23 @@
 ---
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
 - name: Restart user-service
-  service:
+  systemd:
     name: user-service
     state: restarted
+
 - name: Notify dependent services of user-service restart
   debug:
-    msg: "User service has been restarted. Notifying dependent services..."
+    msg: "User service has been restarted."
+
 - name: Wait for user-service to be available
   uri:
-    url: "http://{{ inventory_hostname }}:8003/health"
+    url: "http://{{ inventory_hostname }}:8000/actuator/health"
     status_code: 200
     method: GET
-    retries: 5
-    delay: 10
   register: user_service_health
+  retries: 5
+  delay: 10
   until: user_service_health.status == 200

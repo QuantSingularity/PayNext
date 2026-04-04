@@ -1,0 +1,33 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "paynext-api-gateway"
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["api-gateway:8002"]
+
+  - job_name: "paynext-user-service"
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["user-service:8000"]
+
+  - job_name: "paynext-payment-service"
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["payment-service:8003"]
+
+  - job_name: "paynext-notification-service"
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["notification-service:8004"]
+
+  - job_name: "paynext-eureka-server"
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["eureka-server:8001"]
+
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
