@@ -1,67 +1,29 @@
 #!/bin/bash
+# =============================================================================
+# PayNext — Build All Services
+# =============================================================================
 set -e
 
-SERVICES=(
-    "common-module"
-    "eureka-server"
-    "api-gateway"
-    "user-service"
-    "payment-service"
-    "notification-service"
-    "fraud-detection-service"
-)
+ROOT=$(dirname "$(realpath "$0")")
+echo "========================================"
+echo "  Building PayNext Backend Services"
+echo "========================================"
 
-BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# ─── Java microservices ────────────────────────────────────────────────────
+echo ""
+echo "[1/2] Building Java microservices (Maven) ..."
+cd "$ROOT"
+mvn clean package -DskipTests
+echo "Java build complete."
 
-is_valid_service() {
-    local SERVICE=$1
-    for S in "${SERVICES[@]}"; do
-        [[ "$S" == "$SERVICE" ]] && return 0
-    done
-    return 1
-}
+# ─── Python ML services ───────────────────────────────────────────────────
+echo ""
+echo "[2/2] Installing Python ML dependencies and training models ..."
+pip install --quiet -r "$ROOT/ml-common/requirements.txt"
+python "$ROOT/train_all.py"
 
-build_service() {
-    local SERVICE=$1
-    echo "----------------------------------------"
-    echo "Building $SERVICE..."
-    cd "$BASE_DIR/$SERVICE" || { echo "Directory not found: $BASE_DIR/$SERVICE"; exit 1; }
-    mvn clean package -DskipTests
-    echo "$SERVICE built successfully."
-    cd "$BASE_DIR"
-}
-
-build_all_services() {
-    for SERVICE in "${SERVICES[@]}"; do
-        build_service "$SERVICE"
-    done
-    echo "========================================"
-    echo "All services built successfully."
-    echo "========================================"
-}
-
-usage() {
-    echo "Usage: $0 [service_name]"
-    echo ""
-    echo "Available services:"
-    for S in "${SERVICES[@]}"; do echo "  - $S"; done
-    exit 1
-}
-
-if ! command -v mvn &>/dev/null; then
-    echo "'mvn' not found. Please install Maven."
-    exit 1
-fi
-
-if [ $# -gt 1 ]; then usage; fi
-
-if [ $# -eq 1 ]; then
-    if is_valid_service "$1"; then
-        build_service "$1"
-    else
-        echo "Invalid service: $1"
-        usage
-    fi
-else
-    build_all_services
-fi
+echo ""
+echo "========================================"
+echo "  All builds complete."
+echo "  Start the stack: ./run-all.sh start"
+echo "========================================"

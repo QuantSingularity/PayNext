@@ -1,15 +1,17 @@
-FROM eclipse-temurin:17-jdk-alpine AS builder
-WORKDIR /build
-COPY target/ai-fraud-detection-service-1.0.0.jar app.jar
-RUN java -Djarmode=layertools -jar app.jar extract
+FROM python:3.11-slim
 
-FROM eclipse-temurin:17-jre-alpine
-RUN addgroup -S spring && adduser -S spring -G spring
-USER spring:spring
 WORKDIR /app
-COPY --from=builder /build/dependencies/ ./
-COPY --from=builder /build/spring-boot-loader/ ./
-COPY --from=builder /build/snapshot-dependencies/ ./
-COPY --from=builder /build/application/ ./
-EXPOSE 8006
-ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
+
+COPY fraud-detection-service/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY ml-common/ ./ml-common/
+COPY fraud-detection-service/ ./fraud-detection-service/
+
+WORKDIR /app/fraud-detection-service
+
+RUN mkdir -p models
+
+EXPOSE 9001
+
+CMD ["uvicorn", "fraud_detection_api:app", "--host", "0.0.0.0", "--port", "9001"]

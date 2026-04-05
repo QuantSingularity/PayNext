@@ -1,0 +1,28 @@
+# Core ML
+pandas==2.2.2
+scikit-learn==1.5.1
+joblib==1.4.2
+tensorflow==2.17.0
+numpy==1.26.4
+
+# API
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.9.2
+
+# Persistence (MySQL in prod, SQLite in dev)
+sqlalchemy==2.0.36
+pymysql==1.1.1
+cryptography==43.0.3
+
+# Caching
+redis==5.1.1
+
+# Kafka event publishing
+kafka-python==2.0.2
+
+# Scheduling (model retrain job)
+apscheduler==3.10.4
+
+# HTTP client (healthcheck, inter-service calls)
+httpx==0.27.2

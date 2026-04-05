@@ -1,36 +1,37 @@
 #!/bin/bash
-# Run all services locally for development
-# Requires each service JAR to be built first (run build-all.sh)
-
+# =============================================================================
+# PayNext — Start / Stop all services
+# =============================================================================
 set -e
-BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROFILE="${SPRING_PROFILES_ACTIVE:-dev}"
-LOG_DIR="$BASE_DIR/logs"
-mkdir -p "$LOG_DIR"
+ROOT=$(dirname "$(realpath "$0")")
 
-start_service() {
-    local NAME=$1
-    local JAR=$2
-    local PORT=$3
-    echo "Starting $NAME on port $PORT..."
-    java -jar \
-        -Dspring.profiles.active="$PROFILE" \
-        -Dserver.port="$PORT" \
-        "$BASE_DIR/$NAME/target/$JAR" \
-        > "$LOG_DIR/$NAME.log" 2>&1 &
-    echo "$NAME PID: $!"
-}
-
-start_service "eureka-server"          "eureka-server-1.0.0.jar"             8001
-sleep 10
-
-start_service "api-gateway"            "api-gateway-1.0.0.jar"               8002
-start_service "user-service"           "user-service-1.0.0.jar"              8003
-start_service "payment-service"        "payment-service-1.0.0.jar"           8004
-start_service "notification-service"   "notification-service-1.0.0.jar"      8005
-start_service "fraud-detection-service" "ai-fraud-detection-service-1.0.0.jar" 8006
-
-echo ""
-echo "All services started. Logs in $LOG_DIR/"
-echo "Press Ctrl+C to stop watching logs."
-wait
+case "$1" in
+  start|up)
+    echo "Starting all PayNext services ..."
+    docker-compose -f "$ROOT/docker-compose.yml" up --build -d
+    echo ""
+    echo "Service endpoints:"
+    echo "  Eureka Dashboard           : http://localhost:8001"
+    echo "  API Gateway                : http://localhost:8002"
+    echo "  User Service               : http://localhost:8003/actuator/health"
+    echo "  Payment Service            : http://localhost:8004/actuator/health"
+    echo "  Notification Service       : http://localhost:8005/actuator/health"
+    echo "  Fraud Detection Service    : http://localhost:9001/health  (Python/ML)"
+    echo "  Anomaly Detection Service  : http://localhost:9002/health"
+    echo "  Churn Prediction Service   : http://localhost:9003/health"
+    echo "  Recommendation Service     : http://localhost:9004/health"
+    echo "  Categorization Service     : http://localhost:9005/health"
+    echo "  Credit Scoring Service     : http://localhost:9006/health"
+    echo "  Data Analytics Service     : http://localhost:9007/health"
+    ;;
+  stop|down)
+    docker-compose -f "$ROOT/docker-compose.yml" down
+    ;;
+  logs)
+    docker-compose -f "$ROOT/docker-compose.yml" logs -f "${2:-}"
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|logs [service-name]}"
+    exit 1
+    ;;
+esac
