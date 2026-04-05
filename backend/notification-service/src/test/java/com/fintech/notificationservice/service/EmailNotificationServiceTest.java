@@ -5,9 +5,11 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import com.fintech.notificationservice.model.NotificationRequest;
+import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,7 +25,6 @@ class EmailNotificationServiceTest {
 
   @Mock private JavaMailSender mailSender;
   @Mock private TemplateEngine templateEngine;
-  @Mock private MimeMessage mimeMessage;
 
   @InjectMocks private EmailNotificationService emailNotificationService;
 
@@ -47,7 +48,8 @@ class EmailNotificationServiceTest {
 
   @Test
   void sendNotification_withProperties_shouldSendHtmlEmail() {
-    when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+    MimeMessage realMimeMessage = new MimeMessage(Session.getInstance(new Properties()));
+    when(mailSender.createMimeMessage()).thenReturn(realMimeMessage);
     when(templateEngine.process(anyString(), any())).thenReturn("<html><body>Test</body></html>");
     doNothing().when(mailSender).send(any(MimeMessage.class));
 

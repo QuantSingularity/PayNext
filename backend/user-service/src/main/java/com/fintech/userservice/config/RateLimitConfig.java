@@ -6,18 +6,12 @@ import io.github.bucket4j.Refill;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RateLimitConfig {
 
   private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
-
-  @Bean
-  public Map<String, Bucket> rateLimitBuckets() {
-    return buckets;
-  }
 
   public Bucket createBucket(String key, long capacity, long refillTokens, Duration refillPeriod) {
     return buckets.computeIfAbsent(

@@ -1,6 +1,5 @@
 package com.fintech.userservice.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fintech.userservice.model.AuditLog;
 import com.fintech.userservice.repository.AuditLogRepository;
 import java.time.LocalDateTime;
@@ -20,8 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuditServiceImpl implements AuditService {
 
   @Autowired private AuditLogRepository auditLogRepository;
-
-  @Autowired private ObjectMapper objectMapper;
 
   @Override
   public void logAction(
@@ -53,11 +50,11 @@ public class AuditServiceImpl implements AuditService {
       }
 
       if (requestData != null) {
-        auditLog.setRequestData(objectMapper.writeValueAsString(requestData));
+        auditLog.setRequestData(requestData.toString());
       }
 
       if (responseData != null) {
-        auditLog.setResponseData(objectMapper.writeValueAsString(responseData));
+        auditLog.setResponseData(responseData.toString());
       }
 
       if (statusCode != null) {

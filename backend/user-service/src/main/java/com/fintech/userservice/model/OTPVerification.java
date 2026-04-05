@@ -28,9 +28,9 @@ public class OTPVerification {
   private OTPType otpType;
 
   @Column(name = "contact_info", nullable = false)
-  private String contactInfo; // email or phone number
+  private String contactInfo;
 
-  @Column(name = "created_at", nullable = false)
+  @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt = LocalDateTime.now();
 
   @Column(name = "expires_at", nullable = false)
@@ -40,7 +40,7 @@ public class OTPVerification {
   private LocalDateTime verifiedAt;
 
   @Column(name = "is_used", nullable = false)
-  private Boolean isUsed = false;
+  private boolean isUsed = false;
 
   @Column(name = "attempts", nullable = false)
   private Integer attempts = 0;

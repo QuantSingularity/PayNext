@@ -106,7 +106,7 @@ public class OTPServiceImpl implements OTPService {
       return false;
     }
 
-    otp.setIsUsed(true);
+    otp.setUsed(true);
     otp.setVerifiedAt(LocalDateTime.now());
     otpRepository.save(otp);
 
@@ -153,7 +153,7 @@ public class OTPServiceImpl implements OTPService {
         otpRepository.findByUserIdAndOtpTypeAndIsUsedFalse(userId, type);
     existingOTP.ifPresent(
         otp -> {
-          otp.setIsUsed(true);
+          otp.setUsed(true);
           otpRepository.save(otp);
         });
   }

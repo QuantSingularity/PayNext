@@ -36,18 +36,18 @@ public class UserController {
 
   @PostMapping("/register")
   public ResponseEntity<?> registerUser(@RequestBody User user) {
-    try {
-      PasswordValidator.validate(user.getPassword());
-    } catch (IllegalArgumentException e) {
-      return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-    }
-
     if (user.getUsername() == null || user.getUsername().isBlank()) {
       return ResponseEntity.badRequest().body(Map.of("error", "Username is required"));
     }
 
     if (user.getEmail() == null || user.getEmail().isBlank()) {
       return ResponseEntity.badRequest().body(Map.of("error", "Email is required"));
+    }
+
+    try {
+      PasswordValidator.validate(user.getPassword());
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
     }
 
     if (userService.findByUsername(user.getUsername()) != null) {
@@ -66,6 +66,10 @@ public class UserController {
 
   @PostMapping("/login")
   public ResponseEntity<?> authenticateUser(@RequestBody User loginRequest) {
+    if (loginRequest.getUsername() == null || loginRequest.getUsername().isBlank()) {
+      return ResponseEntity.badRequest().body(Map.of("error", "Username is required"));
+    }
+
     try {
       Authentication authentication =
           authenticationManager.authenticate(
@@ -79,8 +83,7 @@ public class UserController {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
           .body(Map.of("error", "Invalid credentials"));
     } catch (Exception e) {
-      log.error(
-          "Unexpected error during login for user: {}", loginRequest.getUsername(), e);
+      log.error("Unexpected error during login for user: {}", loginRequest.getUsername(), e);
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
           .body(Map.of("error", "An unexpected error occurred"));
     }
@@ -88,6 +91,16 @@ public class UserController {
 
   @GetMapping("/{id}")
   public ResponseEntity<?> getUserById(@PathVariable Long id) {
-    return ResponseEntity.ok(Map.of("id", id));
+    User user = userService.findById(id);
+    if (user == null) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(Map.of("error", "User not found with id: " + id));
+    }
+    return ResponseEntity.ok(
+        Map.of(
+            "id", user.getId(),
+            "username", user.getUsername(),
+            "email", user.getEmail(),
+            "role", user.getRole()));
   }
 }

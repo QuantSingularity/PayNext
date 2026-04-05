@@ -12,8 +12,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface OTPVerificationRepository extends JpaRepository<OTPVerification, Long> {
 
+  @Query("SELECT o FROM OTPVerification o WHERE o.userId = :userId AND o.otpType = :otpType AND o.isUsed = false")
   Optional<OTPVerification> findByUserIdAndOtpTypeAndIsUsedFalse(
-      Long userId, OTPVerification.OTPType otpType);
+      @Param("userId") Long userId, @Param("otpType") OTPVerification.OTPType otpType);
 
   List<OTPVerification> findByExpiresAtBefore(LocalDateTime dateTime);
 

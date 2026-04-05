@@ -16,7 +16,7 @@ public class SecurityConfig {
     http.csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(
             auth ->
-                auth.requestMatchers("/actuator/**", "/h2-console/**")
+                auth.requestMatchers("/actuator/**", "/h2-console/**", "/api/payments/**")
                     .permitAll()
                     .anyRequest()
                     .authenticated())

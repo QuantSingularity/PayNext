@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 
 import com.fintech.userservice.model.User;
 import com.fintech.userservice.repository.UserRepository;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -96,5 +97,23 @@ class UserServiceImplTest {
 
     assertNull(userService.findByUsername("ghost"));
     verify(userRepository).findByUsername("ghost");
+  }
+
+  @Test
+  void findById_whenFound_shouldReturnUser() {
+    testUser.setId(1L);
+    when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+
+    User found = userService.findById(1L);
+
+    assertNotNull(found);
+    assertEquals(1L, found.getId());
+  }
+
+  @Test
+  void findById_whenNotFound_shouldReturnNull() {
+    when(userRepository.findById(999L)).thenReturn(Optional.empty());
+
+    assertNull(userService.findById(999L));
   }
 }

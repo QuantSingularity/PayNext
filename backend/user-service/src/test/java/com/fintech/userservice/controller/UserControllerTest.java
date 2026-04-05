@@ -3,11 +3,13 @@ package com.fintech.userservice.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fintech.common.util.JwtUtil;
+import com.fintech.userservice.filter.JwtAuthenticationFilter;
 import com.fintech.userservice.model.User;
 import com.fintech.userservice.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +35,7 @@ class UserControllerTest {
   @MockBean private AuthenticationManager authenticationManager;
   @MockBean private JwtUtil jwtUtil;
   @MockBean private UserDetailsService userDetailsService;
+  @MockBean private JwtAuthenticationFilter jwtAuthenticationFilter;
 
   @Autowired private ObjectMapper objectMapper;
 
@@ -56,6 +59,7 @@ class UserControllerTest {
     mockMvc
         .perform(
             post("/users/register")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(testUser)))
         .andExpect(status().isCreated())
@@ -70,6 +74,7 @@ class UserControllerTest {
     mockMvc
         .perform(
             post("/users/register")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(testUser)))
         .andExpect(status().isBadRequest());
@@ -82,6 +87,7 @@ class UserControllerTest {
     mockMvc
         .perform(
             post("/users/register")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(testUser)))
         .andExpect(status().isBadRequest());
@@ -89,10 +95,14 @@ class UserControllerTest {
 
   @Test
   void login_withValidCredentials_shouldReturnToken() throws Exception {
-    UserDetails mockUserDetails = org.springframework.security.core.userdetails.User
-        .withUsername("testuser").password("encoded").roles("USER").build();
+    UserDetails mockUserDetails =
+        org.springframework.security.core.userdetails.User.withUsername("testuser")
+            .password("encoded")
+            .roles("USER")
+            .build();
     org.springframework.security.core.Authentication auth =
-        new UsernamePasswordAuthenticationToken(mockUserDetails, null, mockUserDetails.getAuthorities());
+        new UsernamePasswordAuthenticationToken(
+            mockUserDetails, null, mockUserDetails.getAuthorities());
 
     when(authenticationManager.authenticate(any())).thenReturn(auth);
     when(jwtUtil.generateToken(any(UserDetails.class))).thenReturn("mock-jwt-token");
@@ -100,6 +110,7 @@ class UserControllerTest {
     mockMvc
         .perform(
             post("/users/login")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(testUser)))
         .andExpect(status().isOk())
@@ -114,6 +125,7 @@ class UserControllerTest {
     mockMvc
         .perform(
             post("/users/login")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(testUser)))
         .andExpect(status().isUnauthorized());
@@ -121,9 +133,22 @@ class UserControllerTest {
 
   @Test
   @WithMockUser
-  void getUserById_shouldReturnOk() throws Exception {
+  void getUserById_whenFound_shouldReturnOk() throws Exception {
+    when(userService.findById(1L)).thenReturn(testUser);
+
     mockMvc
         .perform(get("/users/1").contentType(MediaType.APPLICATION_JSON))
-        .andExpect(status().isOk());
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.username").value(testUser.getUsername()));
+  }
+
+  @Test
+  @WithMockUser
+  void getUserById_whenNotFound_shouldReturnNotFound() throws Exception {
+    when(userService.findById(999L)).thenReturn(null);
+
+    mockMvc
+        .perform(get("/users/999").contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNotFound());
   }
 }

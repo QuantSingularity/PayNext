@@ -1,6 +1,7 @@
 package com.fintech.eurekaserver;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -20,7 +21,7 @@ public class EurekaServerApplicationTests {
 
   @Test
   void contextLoads() {
-    // This test verifies that the Spring context loads successfully
+    assertTrue(port > 0, "Server port should be assigned");
   }
 
   @Test
@@ -29,6 +30,7 @@ public class EurekaServerApplicationTests {
         restTemplate.getForEntity("http://localhost:" + port + "/eureka/apps", String.class);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
   }
 
   @Test
@@ -37,6 +39,7 @@ public class EurekaServerApplicationTests {
         restTemplate.getForEntity("http://localhost:" + port + "/actuator/health", String.class);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
     assertTrue(response.getBody().contains("UP"));
   }
 }
