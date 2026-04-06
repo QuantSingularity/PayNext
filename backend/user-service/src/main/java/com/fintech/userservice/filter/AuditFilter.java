@@ -1,5 +1,7 @@
 package com.fintech.userservice.filter;
 
+import com.fintech.userservice.model.User;
+import com.fintech.userservice.repository.UserRepository;
 import com.fintech.userservice.service.AuditService;
 import com.fintech.common.util.JwtUtil;
 import java.io.IOException;
@@ -23,12 +25,13 @@ public class AuditFilter extends OncePerRequestFilter {
 
   @Autowired private JwtUtil jwtUtil;
 
+  @Autowired private UserRepository userRepository;
+
   @Override
   protected void doFilterInternal(
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
 
-    // Skip audit for health check and static resources
     if (shouldSkipAudit(request)) {
       filterChain.doFilter(request, response);
       return;
@@ -44,14 +47,11 @@ public class AuditFilter extends OncePerRequestFilter {
     } finally {
       long executionTime = System.currentTimeMillis() - startTime;
 
-      // Extract user ID from JWT token
       Long userId = extractUserIdFromRequest(requestWrapper);
 
-      // Get request and response data
       String requestData = getRequestData(requestWrapper);
       String responseData = getResponseData(responseWrapper);
 
-      // Log the audit entry
       auditService.logAction(
           userId,
           request.getMethod(),
@@ -63,7 +63,6 @@ public class AuditFilter extends OncePerRequestFilter {
           response.getStatus(),
           executionTime);
 
-      // Copy response body back to the original response
       responseWrapper.copyBodyToResponse();
     }
   }
@@ -86,10 +85,9 @@ public class AuditFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
         String username = jwtUtil.getUsernameFromToken(token);
         if (username != null) {
-          try {
-            return Long.parseLong(username);
-          } catch (NumberFormatException e) {
-            log.debug("Username is not a numeric user ID: {}", username);
+          User user = userRepository.findByUsername(username);
+          if (user != null) {
+            return user.getId();
           }
         }
       }
@@ -104,7 +102,6 @@ public class AuditFilter extends OncePerRequestFilter {
       byte[] content = request.getContentAsByteArray();
       if (content.length > 0) {
         String requestBody = new String(content, StandardCharsets.UTF_8);
-        // Mask sensitive data
         return maskSensitiveData(requestBody);
       }
     } catch (Exception e) {
@@ -118,7 +115,6 @@ public class AuditFilter extends OncePerRequestFilter {
       byte[] content = response.getContentAsByteArray();
       if (content.length > 0) {
         String responseBody = new String(content, StandardCharsets.UTF_8);
-        // Mask sensitive data
         return maskSensitiveData(responseBody);
       }
     } catch (Exception e) {
@@ -130,22 +126,17 @@ public class AuditFilter extends OncePerRequestFilter {
   private String extractResourceId(HttpServletRequest request) {
     String uri = request.getRequestURI();
     String[] pathSegments = uri.split("/");
-
-    // Try to extract ID from the last path segment
     if (pathSegments.length > 0) {
       String lastSegment = pathSegments[pathSegments.length - 1];
       if (lastSegment.matches("\\d+")) {
         return lastSegment;
       }
     }
-
     return null;
   }
 
   private String maskSensitiveData(String data) {
     if (data == null) return null;
-
-    // Mask common sensitive fields
     return data.replaceAll("(\"password\"\\s*:\\s*\")([^\"]*)(\")", "$1***$3")
         .replaceAll("(\"token\"\\s*:\\s*\")([^\"]*)(\")", "$1***$3")
         .replaceAll("(\"otp\"\\s*:\\s*\")([^\"]*)(\")", "$1***$3")
@@ -153,3 +144,4 @@ public class AuditFilter extends OncePerRequestFilter {
         .replaceAll("(\"creditCard\"\\s*:\\s*\")([^\"]*)(\")", "$1***$3");
   }
 }
+

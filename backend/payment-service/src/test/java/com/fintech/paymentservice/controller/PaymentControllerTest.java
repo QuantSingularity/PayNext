@@ -7,6 +7,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fintech.paymentservice.client.NotificationClient;
+import com.fintech.paymentservice.client.UserClient;
 import com.fintech.paymentservice.model.Payment;
 import com.fintech.paymentservice.service.PaymentService;
 import java.math.BigDecimal;
@@ -27,6 +29,8 @@ class PaymentControllerTest {
 
   @Autowired private MockMvc mockMvc;
   @MockBean private PaymentService paymentService;
+  @MockBean private UserClient userClient;
+  @MockBean private NotificationClient notificationClient;
   @Autowired private ObjectMapper objectMapper;
 
   private Payment testPayment;

@@ -1,6 +1,7 @@
 package com.fintech.userservice.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -28,7 +29,7 @@ public class User {
   @Column(nullable = false, unique = true)
   private String username;
 
-  @JsonIgnore
+  @JsonProperty(access = Access.WRITE_ONLY)
   @Column(nullable = false)
   private String password;
 

@@ -1,8 +1,6 @@
 package com.fintech.eurekaserver;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,21 +23,22 @@ public class EurekaServerApplicationTests {
   }
 
   @Test
-  void eurekaEndpointShouldBeAvailable() {
-    ResponseEntity<String> response =
-        restTemplate.getForEntity("http://localhost:" + port + "/eureka/apps", String.class);
-
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertNotNull(response.getBody());
-  }
-
-  @Test
-  void eurekaStatusEndpointShouldReturnUp() {
+  void actuatorHealthShouldReturnUp() {
     ResponseEntity<String> response =
         restTemplate.getForEntity("http://localhost:" + port + "/actuator/health", String.class);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
-    assertTrue(response.getBody().contains("UP"));
+    assertTrue(response.getBody().contains("UP"), "Health endpoint should report UP status");
+  }
+
+  @Test
+  void eurekaAppsEndpointShouldBeAvailable() {
+    ResponseEntity<String> response =
+        restTemplate.getForEntity("http://localhost:" + port + "/eureka/apps", String.class);
+
+    // Eureka apps endpoint returns 200 with an XML/JSON body listing registered apps
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
   }
 }

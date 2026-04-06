@@ -37,6 +37,7 @@ class UserServiceImplTest {
 
   @Test
   void saveUser_shouldEncodePasswordAndSave() {
+    when(userRepository.existsByEmail(anyString())).thenReturn(false);
     when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
     when(userRepository.save(any(User.class))).thenAnswer(inv -> {
       User u = inv.getArgument(0);
@@ -51,6 +52,14 @@ class UserServiceImplTest {
     assertEquals("ROLE_USER", saved.getRole());
     verify(passwordEncoder).encode("Password1@");
     verify(userRepository).save(testUser);
+  }
+
+  @Test
+  void saveUser_withDuplicateEmail_shouldThrowIllegalArgumentException() {
+    when(userRepository.existsByEmail(anyString())).thenReturn(true);
+
+    assertThrows(IllegalArgumentException.class, () -> userService.saveUser(testUser));
+    verify(userRepository, never()).save(any());
   }
 
   @Test
@@ -72,6 +81,7 @@ class UserServiceImplTest {
   @Test
   void saveUser_withNullRole_shouldDefaultToRoleUser() {
     testUser.setRole(null);
+    when(userRepository.existsByEmail(anyString())).thenReturn(false);
     when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
     when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -97,6 +107,23 @@ class UserServiceImplTest {
 
     assertNull(userService.findByUsername("ghost"));
     verify(userRepository).findByUsername("ghost");
+  }
+
+  @Test
+  void findByEmail_shouldReturnUser() {
+    when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+
+    User found = userService.findByEmail("test@example.com");
+
+    assertNotNull(found);
+    assertEquals("test@example.com", found.getEmail());
+  }
+
+  @Test
+  void findByEmail_whenNotFound_shouldReturnNull() {
+    when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
+
+    assertNull(userService.findByEmail("nobody@example.com"));
   }
 
   @Test

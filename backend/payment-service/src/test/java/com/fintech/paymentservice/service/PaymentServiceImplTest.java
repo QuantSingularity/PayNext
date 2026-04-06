@@ -2,9 +2,12 @@ package com.fintech.paymentservice.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 import com.fintech.paymentservice.client.NotificationClient;
+import com.fintech.paymentservice.client.UserClient;
+import com.fintech.paymentservice.dto.UserDTO;
 import com.fintech.paymentservice.model.NotificationRequest;
 import com.fintech.paymentservice.model.Payment;
 import com.fintech.paymentservice.repository.PaymentRepository;
@@ -26,6 +29,7 @@ class PaymentServiceImplTest {
 
   @Mock private PaymentRepository paymentRepository;
   @Mock private NotificationClient notificationClient;
+  @Mock private UserClient userClient;
 
   @InjectMocks private PaymentServiceImpl paymentService;
 
@@ -47,6 +51,8 @@ class PaymentServiceImplTest {
       p.setId(1L);
       return p;
     });
+    when(userClient.getUserById(anyLong()))
+        .thenReturn(new UserDTO(100L, "Test User", "user@example.com"));
     when(notificationClient.sendNotification(any(NotificationRequest.class)))
         .thenReturn(ResponseEntity.ok().build());
 
@@ -63,6 +69,8 @@ class PaymentServiceImplTest {
   void processPayment_withNullDate_shouldDefaultDate() {
     testPayment.setPaymentDate(null);
     when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
+    when(userClient.getUserById(anyLong()))
+        .thenReturn(new UserDTO(100L, "Test User", "user@example.com"));
     when(notificationClient.sendNotification(any())).thenReturn(ResponseEntity.ok().build());
 
     Payment result = paymentService.processPayment(testPayment);
@@ -77,12 +85,32 @@ class PaymentServiceImplTest {
       p.setId(1L);
       return p;
     });
-    when(notificationClient.sendNotification(any())).thenThrow(new RuntimeException("Notification unavailable"));
+    when(userClient.getUserById(anyLong()))
+        .thenReturn(new UserDTO(100L, "Test User", "user@example.com"));
+    when(notificationClient.sendNotification(any()))
+        .thenThrow(new RuntimeException("Notification unavailable"));
 
     Payment result = paymentService.processPayment(testPayment);
 
     assertNotNull(result);
     assertNotNull(result.getId());
+  }
+
+  @Test
+  void processPayment_whenUserServiceFails_shouldStillNotify() {
+    when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> {
+      Payment p = inv.getArgument(0);
+      p.setId(1L);
+      return p;
+    });
+    when(userClient.getUserById(anyLong()))
+        .thenThrow(new RuntimeException("User service down"));
+    when(notificationClient.sendNotification(any())).thenReturn(ResponseEntity.ok().build());
+
+    Payment result = paymentService.processPayment(testPayment);
+
+    assertNotNull(result);
+    verify(notificationClient).sendNotification(any(NotificationRequest.class));
   }
 
   @Test

@@ -12,6 +12,8 @@ import com.fintech.common.util.JwtUtil;
 import com.fintech.userservice.filter.JwtAuthenticationFilter;
 import com.fintech.userservice.model.User;
 import com.fintech.userservice.service.UserService;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,9 +53,27 @@ class UserControllerTest {
     testUser.setRole("ROLE_USER");
   }
 
+  /** Build a registration request body that includes the password in JSON. */
+  private String registerJson(String username, String password, String email) throws Exception {
+    Map<String, String> body = new HashMap<>();
+    body.put("username", username);
+    body.put("password", password);
+    body.put("email", email);
+    return objectMapper.writeValueAsString(body);
+  }
+
+  /** Build a login request body that includes the password in JSON. */
+  private String loginJson(String username, String password) throws Exception {
+    Map<String, String> body = new HashMap<>();
+    body.put("username", username);
+    body.put("password", password);
+    return objectMapper.writeValueAsString(body);
+  }
+
   @Test
   void register_withValidUser_shouldReturnCreated() throws Exception {
     when(userService.findByUsername(anyString())).thenReturn(null);
+    when(userService.findByEmail(anyString())).thenReturn(null);
     when(userService.saveUser(any(User.class))).thenReturn(testUser);
 
     mockMvc
@@ -61,7 +81,7 @@ class UserControllerTest {
             post("/users/register")
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(testUser)))
+                .content(registerJson("testuser", "Password1@", "test@example.com")))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.username").value(testUser.getUsername()))
         .andExpect(jsonPath("$.email").value(testUser.getEmail()));
@@ -76,20 +96,29 @@ class UserControllerTest {
             post("/users/register")
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(testUser)))
+                .content(registerJson("testuser", "Password1@", "test@example.com")))
         .andExpect(status().isBadRequest());
   }
 
   @Test
   void register_withInvalidPassword_shouldReturnBadRequest() throws Exception {
-    testUser.setPassword("weak");
-
     mockMvc
         .perform(
             post("/users/register")
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(testUser)))
+                .content(registerJson("testuser", "weak", "test@example.com")))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void register_withInvalidEmail_shouldReturnBadRequest() throws Exception {
+    mockMvc
+        .perform(
+            post("/users/register")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(registerJson("testuser", "Password1@", "not-an-email")))
         .andExpect(status().isBadRequest());
   }
 
@@ -112,7 +141,7 @@ class UserControllerTest {
             post("/users/login")
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(testUser)))
+                .content(loginJson("testuser", "Password1@")))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.token").value("mock-jwt-token"));
   }
@@ -127,7 +156,7 @@ class UserControllerTest {
             post("/users/login")
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(testUser)))
+                .content(loginJson("testuser", "wrongpassword")))
         .andExpect(status().isUnauthorized());
   }
 

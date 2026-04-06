@@ -3,6 +3,7 @@ package com.fintech.paymentservice.model;
 public class NotificationRequest {
   private String recipient;
   private String message;
+  private String subject;
 
   public NotificationRequest() {}
 
@@ -27,6 +28,14 @@ public class NotificationRequest {
     this.message = message;
   }
 
+  public String getSubject() {
+    return subject;
+  }
+
+  public void setSubject(String subject) {
+    this.subject = subject;
+  }
+
   @Override
   public String toString() {
     return "NotificationRequest{"
@@ -35,6 +44,9 @@ public class NotificationRequest {
         + '\''
         + ", message='"
         + message
+        + '\''
+        + ", subject='"
+        + subject
         + '\''
         + '}';
   }

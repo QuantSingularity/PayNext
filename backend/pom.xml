@@ -25,7 +25,6 @@
         <module>user-service</module>
         <module>payment-service</module>
         <module>notification-service</module>
-        <module>fraud-detection-service</module>
         <module>common-module</module>
     </modules>
 

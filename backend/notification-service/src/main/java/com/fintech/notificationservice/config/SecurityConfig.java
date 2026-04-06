@@ -1,4 +1,4 @@
-package com.fintech.paymentservice.config;
+package com.fintech.notificationservice.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,13 +16,12 @@ public class SecurityConfig {
     http.csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(
             auth ->
-                auth.requestMatchers("/actuator/**", "/h2-console/**")
+                auth.requestMatchers("/actuator/**", "/notifications/send")
                     .permitAll()
                     .anyRequest()
                     .authenticated())
         .sessionManagement(
-            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .headers(headers -> headers.frameOptions(f -> f.disable()));
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
     return http.build();
   }
 }

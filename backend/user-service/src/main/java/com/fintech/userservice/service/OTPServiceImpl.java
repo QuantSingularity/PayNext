@@ -9,11 +9,13 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +43,16 @@ public class OTPServiceImpl implements OTPService {
   private static final int OTP_LENGTH = 6;
   private static final int OTP_EXPIRY_MINUTES = 10;
   private static final SecureRandom random = new SecureRandom();
+
+  @PostConstruct
+  public void initTwilio() {
+    if (!"placeholder".equals(twilioAccountSid) && !"placeholder".equals(twilioAuthToken)) {
+      Twilio.init(twilioAccountSid, twilioAuthToken);
+      log.info("Twilio SDK initialized");
+    } else {
+      log.warn("Twilio credentials are placeholders — SMS sending is disabled");
+    }
+  }
 
   @Override
   public OTPVerification generateEmailOTP(Long userId, String email, OTPVerification.OTPType type) {
@@ -134,6 +146,7 @@ public class OTPServiceImpl implements OTPService {
   }
 
   @Override
+  @Scheduled(fixedRate = 300000)
   public void cleanupExpiredOTPs() {
     List<OTPVerification> expiredOTPs = otpRepository.findByExpiresAtBefore(LocalDateTime.now());
     otpRepository.deleteAll(expiredOTPs);
@@ -180,8 +193,6 @@ public class OTPServiceImpl implements OTPService {
 
   private void sendSMSOTP(String phoneNumber, String otpCode, OTPVerification.OTPType type) {
     try {
-      Twilio.init(twilioAccountSid, twilioAuthToken);
-
       String messageBody =
           String.format(
               "Your PayNext OTP code for %s is: %s. Valid for %d minutes.",

@@ -5,6 +5,7 @@ import com.fintech.common.util.PasswordValidator;
 import com.fintech.userservice.model.User;
 import com.fintech.userservice.service.UserService;
 import java.util.Map;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,9 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/users")
 public class UserController {
+
+  private static final Pattern EMAIL_PATTERN =
+      Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
   private final UserService userService;
   private final AuthenticationManager authenticationManager;
@@ -44,6 +48,10 @@ public class UserController {
       return ResponseEntity.badRequest().body(Map.of("error", "Email is required"));
     }
 
+    if (!EMAIL_PATTERN.matcher(user.getEmail()).matches()) {
+      return ResponseEntity.badRequest().body(Map.of("error", "Invalid email format"));
+    }
+
     try {
       PasswordValidator.validate(user.getPassword());
     } catch (IllegalArgumentException e) {
@@ -54,14 +62,22 @@ public class UserController {
       return ResponseEntity.badRequest().body(Map.of("error", "Username is already taken"));
     }
 
-    User savedUser = userService.saveUser(user);
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(
-            Map.of(
-                "id", savedUser.getId(),
-                "username", savedUser.getUsername(),
-                "email", savedUser.getEmail(),
-                "role", savedUser.getRole()));
+    if (userService.findByEmail(user.getEmail()) != null) {
+      return ResponseEntity.badRequest().body(Map.of("error", "Email address is already in use"));
+    }
+
+    try {
+      User savedUser = userService.saveUser(user);
+      return ResponseEntity.status(HttpStatus.CREATED)
+          .body(
+              Map.of(
+                  "id", savedUser.getId(),
+                  "username", savedUser.getUsername(),
+                  "email", savedUser.getEmail(),
+                  "role", savedUser.getRole()));
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+    }
   }
 
   @PostMapping("/login")

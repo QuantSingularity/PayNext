@@ -16,8 +16,9 @@ logger = logging.getLogger(__name__)
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 
+# (display_name, directory, training_script)
+# data-analytics-service is a service class, not a standalone trainer — excluded.
 SERVICES = [
-    # (display_name,                   directory,                    training_script)
     ("fraud-detection-service", "fraud-detection-service", "fraud_detection_model.py"),
     (
         "anomaly-detection-service",
@@ -36,7 +37,6 @@ SERVICES = [
         "transaction_categorization_model.py",
     ),
     ("credit-scoring-service", "credit-scoring-service", "credit_scoring_model.py"),
-    ("data-analytics-service", "data-analytics-service", "data_analytics_service.py"),
 ]
 
 errors = []

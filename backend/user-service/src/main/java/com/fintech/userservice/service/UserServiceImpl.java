@@ -23,6 +23,9 @@ public class UserServiceImpl implements UserService {
     if (user.getPassword() == null || user.getPassword().isBlank()) {
       throw new IllegalArgumentException("Password must not be empty");
     }
+    if (userRepository.existsByEmail(user.getEmail())) {
+      throw new IllegalArgumentException("Email address is already in use");
+    }
     user.setPassword(passwordEncoder.encode(user.getPassword()));
     if (user.getRole() == null || user.getRole().isBlank()) {
       user.setRole("ROLE_USER");
@@ -33,6 +36,11 @@ public class UserServiceImpl implements UserService {
   @Override
   public User findByUsername(String username) {
     return userRepository.findByUsername(username);
+  }
+
+  @Override
+  public User findByEmail(String email) {
+    return userRepository.findByEmail(email).orElse(null);
   }
 
   @Override

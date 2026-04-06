@@ -338,7 +338,7 @@ def _geolocation_score(user_id: str, req: Dict, db: Session) -> float:
             if cities and city and city not in cities:
                 score += 0.20
 
-        return min(score, 1.0 if not profile else score)
+        return min(score, 1.0)
     except Exception as exc:
         logger.debug("geolocation_score error: %s", exc)
         return 0.0
