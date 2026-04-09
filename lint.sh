@@ -25,7 +25,6 @@ if [[ ! -d "$TARGET" ]]; then
     exit 1
 fi
 
-# Check there are actually Python files to lint
 PY_FILES=$(find "$TARGET" -name "*.py" | head -1)
 if [[ -z "$PY_FILES" ]]; then
     echo "No Python files found in '$TARGET'."
