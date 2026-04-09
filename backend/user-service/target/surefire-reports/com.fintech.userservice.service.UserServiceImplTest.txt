@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.fintech.userservice.service.UserServiceImplTest
--------------------------------------------------------------------------------
-Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.705 s - in com.fintech.userservice.service.UserServiceImplTest
