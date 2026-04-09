@@ -21,7 +21,10 @@ import {
   Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
-import { AnimatedElement, StaggeredList } from "../components/AnimationComponents";
+import {
+  AnimatedElement,
+  StaggeredList,
+} from "../components/AnimationComponents";
 import { simulateApiCall } from "../services/api";
 
 const TransactionHistory = () => {
@@ -101,7 +104,10 @@ const TransactionHistory = () => {
       setLoading(true);
       setError("");
       try {
-        const response = await simulateApiCall({ transactions: MOCK_TRANSACTIONS }, 800);
+        const response = await simulateApiCall(
+          { transactions: MOCK_TRANSACTIONS },
+          800,
+        );
         setTransactions(response.data.transactions);
       } catch (err) {
         console.error("Failed to load transactions:", err);
@@ -115,7 +121,10 @@ const TransactionHistory = () => {
   }, []);
 
   const formatCurrency = (amount) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
 
   const formatDate = (dateString) =>
     new Intl.DateTimeFormat("en-US", {
@@ -145,7 +154,11 @@ const TransactionHistory = () => {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <AnimatedElement>
-        <Typography variant="h4" component="h1" sx={{ mb: 4, fontWeight: "bold" }}>
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{ mb: 4, fontWeight: "bold" }}
+        >
           Transaction History
         </Typography>
       </AnimatedElement>
@@ -259,7 +272,9 @@ const TransactionHistory = () => {
             </Box>
           ) : filteredTransactions.length === 0 ? (
             <Box sx={{ textAlign: "center", py: 6 }}>
-              <Typography color="text.secondary">No transactions found</Typography>
+              <Typography color="text.secondary">
+                No transactions found
+              </Typography>
             </Box>
           ) : (
             <StaggeredList staggerDelay={0.05}>
@@ -300,7 +315,10 @@ const TransactionHistory = () => {
                         </Avatar>
                       </Grid>
                       <Grid item xs>
-                        <Typography variant="subtitle1" sx={{ fontWeight: "medium" }}>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{ fontWeight: "medium" }}
+                        >
                           {transaction.description}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
@@ -329,7 +347,11 @@ const TransactionHistory = () => {
                         <Chip
                           label={transaction.status}
                           size="small"
-                          color={transaction.status === "completed" ? "success" : "warning"}
+                          color={
+                            transaction.status === "completed"
+                              ? "success"
+                              : "warning"
+                          }
                           sx={{ mt: 0.5 }}
                         />
                       </Grid>

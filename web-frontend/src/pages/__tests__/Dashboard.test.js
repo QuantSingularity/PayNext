@@ -3,9 +3,7 @@ import { BrowserRouter } from "react-router-dom";
 import Dashboard from "../Dashboard";
 
 jest.mock("../../services/api", () => ({
-  simulateApiCall: jest.fn((data, delay = 0) =>
-    Promise.resolve({ data }),
-  ),
+  simulateApiCall: jest.fn((data, delay = 0) => Promise.resolve({ data })),
 }));
 
 const MockDashboard = () => (

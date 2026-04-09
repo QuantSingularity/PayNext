@@ -76,7 +76,10 @@ const Login = ({ onLogin }) => {
           alignItems: "center",
         }}
       >
-        <Paper elevation={3} sx={{ padding: 4, width: "100%", borderRadius: 2 }}>
+        <Paper
+          elevation={3}
+          sx={{ padding: 4, width: "100%", borderRadius: 2 }}
+        >
           <Typography
             component="h1"
             variant="h5"

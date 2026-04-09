@@ -200,7 +200,10 @@ const SendMoney = () => {
           </Typography>
 
           {searchResults.length === 0 ? (
-            <Typography color="text.secondary" sx={{ textAlign: "center", py: 3 }}>
+            <Typography
+              color="text.secondary"
+              sx={{ textAlign: "center", py: 3 }}
+            >
               No recipients found
             </Typography>
           ) : (
@@ -251,13 +254,20 @@ const SendMoney = () => {
                         >
                           {user.name}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary" noWrap>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          noWrap
+                        >
                           {user.email}
                         </Typography>
                       </Box>
                       {formData.recipient &&
                         formData.recipient.id === user.id && (
-                          <CheckIcon color="primary" sx={{ ml: "auto", flexShrink: 0 }} />
+                          <CheckIcon
+                            color="primary"
+                            sx={{ ml: "auto", flexShrink: 0 }}
+                          />
                         )}
                     </CardContent>
                   </Card>
@@ -456,7 +466,9 @@ const SendMoney = () => {
               </Grid>
               <Grid item xs={8}>
                 <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-                  {formData.amount ? formatCurrency(parseFloat(formData.amount)) : "$0.00"}
+                  {formData.amount
+                    ? formatCurrency(parseFloat(formData.amount))
+                    : "$0.00"}
                 </Typography>
               </Grid>
 
@@ -567,7 +579,13 @@ const SendMoney = () => {
             </Typography>
 
             <Box
-              sx={{ display: "flex", justifyContent: "center", gap: 2, mt: 4, flexWrap: "wrap" }}
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                gap: 2,
+                mt: 4,
+                flexWrap: "wrap",
+              }}
             >
               <Button variant="outlined" onClick={() => navigate("/dashboard")}>
                 Back to Dashboard

@@ -30,7 +30,10 @@ describe("AuthService", () => {
       await AuthService.login(username, password);
 
       expect(api.post).toHaveBeenCalledTimes(1);
-      expect(api.post).toHaveBeenCalledWith("/users/login", { username, password });
+      expect(api.post).toHaveBeenCalledWith("/users/login", {
+        username,
+        password,
+      });
     });
 
     it("should store token in localStorage on successful login", async () => {
@@ -92,7 +95,11 @@ describe("AuthService", () => {
       };
       api.post.mockResolvedValue(mockResponse);
 
-      const result = await AuthService.register("newuser", "new@example.com", "password123");
+      const result = await AuthService.register(
+        "newuser",
+        "new@example.com",
+        "password123",
+      );
 
       expect(result).toEqual(mockResponse.data);
     });

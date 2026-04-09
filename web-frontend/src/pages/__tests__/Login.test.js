@@ -24,7 +24,9 @@ describe("Login Page", () => {
     render(<MockLogin />);
     expect(screen.getByLabelText(/Username/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Sign In/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Sign In/i }),
+    ).toBeInTheDocument();
   });
 
   test("shows validation error for empty fields", async () => {
@@ -32,7 +34,9 @@ describe("Login Page", () => {
     const submitButton = screen.getByRole("button", { name: /Sign In/i });
     fireEvent.click(submitButton);
     await waitFor(() => {
-      expect(screen.getByText(/Please fill in all fields/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Please fill in all fields/i),
+      ).toBeInTheDocument();
     });
   });
 
@@ -43,7 +47,9 @@ describe("Login Page", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /Sign In/i }));
     await waitFor(() => {
-      expect(screen.getByText(/Please fill in all fields/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Please fill in all fields/i),
+      ).toBeInTheDocument();
     });
   });
 

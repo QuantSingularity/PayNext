@@ -60,7 +60,12 @@ const Register = () => {
 
   const validateStep = () => {
     if (activeStep === 0) {
-      if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
+      if (
+        !formData.username ||
+        !formData.email ||
+        !formData.password ||
+        !formData.confirmPassword
+      ) {
         setError("Please fill in all required fields");
         return false;
       }

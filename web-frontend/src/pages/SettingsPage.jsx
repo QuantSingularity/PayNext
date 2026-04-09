@@ -60,7 +60,11 @@ const SettingsPage = () => {
     setPasswordError("");
     setPasswordSuccess("");
 
-    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+    if (
+      !passwordForm.currentPassword ||
+      !passwordForm.newPassword ||
+      !passwordForm.confirmPassword
+    ) {
       setPasswordError("Please fill in all password fields");
       return;
     }
@@ -83,7 +87,11 @@ const SettingsPage = () => {
         newPassword: passwordForm.newPassword,
       });
       setPasswordSuccess("Password changed successfully");
-      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
     } catch (err) {
       const msg =
         err.response?.data?.message ||
@@ -98,7 +106,11 @@ const SettingsPage = () => {
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <AnimatedElement>
-        <Typography variant="h4" component="h1" sx={{ mb: 4, fontWeight: "bold" }}>
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{ mb: 4, fontWeight: "bold" }}
+        >
           Settings
         </Typography>
       </AnimatedElement>
@@ -221,7 +233,13 @@ const SettingsPage = () => {
                   variant="contained"
                   onClick={handleChangePassword}
                   disabled={passwordLoading}
-                  startIcon={passwordLoading ? <CircularProgress size={20} /> : <SecurityIcon />}
+                  startIcon={
+                    passwordLoading ? (
+                      <CircularProgress size={20} />
+                    ) : (
+                      <SecurityIcon />
+                    )
+                  }
                 >
                   {passwordLoading ? "Updating..." : "Change Password"}
                 </Button>

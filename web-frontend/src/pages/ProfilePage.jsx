@@ -117,7 +117,11 @@ const ProfilePage = () => {
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <AnimatedElement>
-        <Typography variant="h4" component="h1" sx={{ mb: 4, fontWeight: "bold" }}>
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{ mb: 4, fontWeight: "bold" }}
+        >
           My Profile
         </Typography>
       </AnimatedElement>
@@ -222,17 +226,30 @@ const ProfilePage = () => {
               </Grid>
             </Grid>
 
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 4, gap: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                mt: 4,
+                gap: 2,
+              }}
+            >
               {editing ? (
                 <>
-                  <Button variant="outlined" onClick={handleCancel} disabled={loading}>
+                  <Button
+                    variant="outlined"
+                    onClick={handleCancel}
+                    disabled={loading}
+                  >
                     Cancel
                   </Button>
                   <Button
                     variant="contained"
                     onClick={handleSave}
                     disabled={loading}
-                    startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
+                    startIcon={
+                      loading ? <CircularProgress size={20} /> : <SaveIcon />
+                    }
                   >
                     {loading ? "Saving..." : "Save Changes"}
                   </Button>

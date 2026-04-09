@@ -20,6 +20,8 @@ describe("App Component", () => {
   test("shows login/register when not authenticated", () => {
     render(<App />);
     expect(screen.getByRole("button", { name: /Login/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Register/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Register/i }),
+    ).toBeInTheDocument();
   });
 });

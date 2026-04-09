@@ -176,7 +176,9 @@ const Navbar = () => {
                   primary={item.label}
                   primaryTypographyProps={{
                     fontWeight: isActive(item.path) ? "bold" : "medium",
-                    color: isActive(item.path) ? "primary.main" : "text.primary",
+                    color: isActive(item.path)
+                      ? "primary.main"
+                      : "text.primary",
                   }}
                 />
               </ListItem>
@@ -366,7 +368,9 @@ const Navbar = () => {
                             ? "primary.main"
                             : "text.primary",
                           fontWeight: isActive(item.path) ? "bold" : "medium",
-                          borderBottom: isActive(item.path) ? "2px solid" : "none",
+                          borderBottom: isActive(item.path)
+                            ? "2px solid"
+                            : "none",
                           borderColor: "primary.main",
                           borderRadius: 0,
                           "&:hover": {

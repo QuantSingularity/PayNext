@@ -33,7 +33,9 @@ describe("ErrorBoundary", () => {
       </ErrorBoundary>,
     );
     expect(screen.getByText(/Something went wrong/i)).toBeInTheDocument();
-    expect(screen.getByText(/An unexpected error occurred/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/An unexpected error occurred/i),
+    ).toBeInTheDocument();
   });
 
   test("shows a Go to Home button in error state", () => {
@@ -42,6 +44,8 @@ describe("ErrorBoundary", () => {
         <ThrowError shouldThrow={true} />
       </ErrorBoundary>,
     );
-    expect(screen.getByRole("button", { name: /Go to Home/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Go to Home/i }),
+    ).toBeInTheDocument();
   });
 });

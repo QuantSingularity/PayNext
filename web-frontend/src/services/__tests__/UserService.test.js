@@ -31,7 +31,11 @@ describe("UserService", () => {
     });
 
     it("should return user profile data on successful fetch", async () => {
-      const mockUser = { id: 1, username: "testuser", email: "test@example.com" };
+      const mockUser = {
+        id: 1,
+        username: "testuser",
+        email: "test@example.com",
+      };
       const mockResponse = { data: mockUser };
       api.get.mockResolvedValue(mockResponse);
 
@@ -62,7 +66,9 @@ describe("UserService", () => {
 
     it("should return updated user profile on success", async () => {
       const profileData = { firstName: "Jane" };
-      const mockResponse = { data: { id: 1, email: "test@example.com", ...profileData } };
+      const mockResponse = {
+        data: { id: 1, email: "test@example.com", ...profileData },
+      };
       api.put.mockResolvedValue(mockResponse);
 
       const result = await UserService.updateUserProfile(profileData);

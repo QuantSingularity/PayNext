@@ -24,7 +24,9 @@ describe("PaymentService", () => {
         amount: 100,
         currency: "USD",
       };
-      const mockResponse = { data: { success: true, transactionId: "txn_123" } };
+      const mockResponse = {
+        data: { success: true, transactionId: "txn_123" },
+      };
       api.post.mockResolvedValue(mockResponse);
 
       await PaymentService.createPayment(paymentData);
@@ -35,7 +37,9 @@ describe("PaymentService", () => {
 
     it("should return transaction details on successful payment", async () => {
       const paymentData = { recipient: "recipient@example.com", amount: 100 };
-      const mockResponse = { data: { success: true, transactionId: "txn_123" } };
+      const mockResponse = {
+        data: { success: true, transactionId: "txn_123" },
+      };
       api.post.mockResolvedValue(mockResponse);
 
       const result = await PaymentService.createPayment(paymentData);
@@ -108,7 +112,9 @@ describe("PaymentService", () => {
     });
 
     it("should return payment data on success", async () => {
-      const mockResponse = { data: { id: "42", amount: 75, status: "completed" } };
+      const mockResponse = {
+        data: { id: "42", amount: 75, status: "completed" },
+      };
       api.get.mockResolvedValue(mockResponse);
 
       const result = await PaymentService.getPaymentById("42");

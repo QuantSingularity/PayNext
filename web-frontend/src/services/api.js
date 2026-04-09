@@ -62,7 +62,10 @@ export const authService = {
   },
 
   isAuthenticated: () => {
-    return localStorage.getItem("isAuthenticated") === "true" && !!localStorage.getItem("token");
+    return (
+      localStorage.getItem("isAuthenticated") === "true" &&
+      !!localStorage.getItem("token")
+    );
   },
 };
 
