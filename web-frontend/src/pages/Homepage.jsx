@@ -15,14 +15,10 @@ import {
   Grid,
   Paper,
   Typography,
-  useMediaQuery,
-  useTheme,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 const Homepage = () => {
-  const theme = useTheme();
-  const _isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const navigate = useNavigate();
 
   const features = [
@@ -30,25 +26,29 @@ const Homepage = () => {
       icon: <SpeedIcon fontSize="large" />,
       title: "Fast Transactions",
       description:
-        "Send and receive money instantly with our lightning-fast payment processing system.",
+        "Send and receive money instantly with our lightning-fast" +
+        " payment processing system.",
     },
     {
       icon: <SecurityIcon fontSize="large" />,
       title: "Secure Payments",
       description:
-        "Bank-level security ensures your money and personal information are always protected.",
+        "Bank-level security ensures your money and personal" +
+        " information are always protected.",
     },
     {
       icon: <DevicesIcon fontSize="large" />,
       title: "Multi-Platform",
       description:
-        "Access your account from any device, anywhere, anytime with our responsive platform.",
+        "Access your account from any device, anywhere, anytime" +
+        " with our responsive platform.",
     },
     {
       icon: <AccountBalanceIcon fontSize="large" />,
       title: "Financial Management",
       description:
-        "Track your spending, set budgets, and manage your finances all in one place.",
+        "Track your spending, set budgets, and manage your" +
+        " finances all in one place.",
     },
   ];
 
@@ -57,21 +57,26 @@ const Homepage = () => {
       name: "Sarah Johnson",
       role: "Small Business Owner",
       content:
-        "PayNext has revolutionized how I handle business payments. The interface is intuitive and transactions are lightning fast!",
+        "PayNext has revolutionized how I handle business payments." +
+        " The interface is intuitive and transactions are lightning fast!",
       image: "https://randomuser.me/api/portraits/women/44.jpg",
     },
     {
       name: "Michael Chen",
       role: "Freelance Developer",
       content:
-        "I receive payments from clients worldwide with minimal fees and maximum security. The dashboard makes tracking everything a breeze.",
+        "I receive payments from clients worldwide with minimal fees" +
+        " and maximum security. The dashboard makes tracking" +
+        " everything a breeze.",
       image: "https://randomuser.me/api/portraits/men/32.jpg",
     },
     {
       name: "Emily Rodriguez",
       role: "E-commerce Manager",
       content:
-        "The integration capabilities with our online store have streamlined our entire payment process. Customer satisfaction is up 40%!",
+        "The integration capabilities with our online store have" +
+        " streamlined our entire payment process." +
+        " Customer satisfaction is up 40%!",
       image: "https://randomuser.me/api/portraits/women/68.jpg",
     },
   ];
@@ -159,7 +164,10 @@ const Homepage = () => {
             >
               <Box
                 component="img"
-                src="https://cdn.pixabay.com/photo/2019/04/26/07/14/transaction-4156934_1280.png"
+                src={
+                  "https://cdn.pixabay.com/photo/2019/04/26/07/14" +
+                  "/transaction-4156934_1280.png"
+                }
                 alt="PayNext Dashboard Preview"
                 sx={{
                   width: "100%",
@@ -306,7 +314,10 @@ const Homepage = () => {
             <Grid item xs={12} md={6}>
               <Box
                 component="img"
-                src="https://cdn.pixabay.com/photo/2017/10/24/07/12/hacker-2883632_1280.jpg"
+                src={
+                  "https://cdn.pixabay.com/photo/2017/10/24/07/12" +
+                  "/hacker-2883632_1280.jpg"
+                }
                 alt="PayNext Mobile App"
                 sx={{
                   width: "100%",
@@ -507,7 +518,7 @@ const Homepage = () => {
                     lineHeight: 1.7,
                   }}
                 >
-                  "{testimonial.content}"
+                  &ldquo;{testimonial.content}&rdquo;
                 </Typography>
               </Card>
             </Grid>

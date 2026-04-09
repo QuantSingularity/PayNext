@@ -45,17 +45,23 @@ const HelpCenter = () => {
         {
           question: "How do I create an account?",
           answer:
-            "Click the 'Register' button in the top right corner, fill in your email and password, and verify your email address. You'll be ready to start sending money in minutes!",
+            "Click the 'Register' button in the top right corner, fill" +
+            " in your email and password, and verify your email address." +
+            " You'll be ready to start sending money in minutes!",
         },
         {
           question: "What documents do I need to verify my account?",
           answer:
-            "For basic accounts, you only need a valid email address. For higher transaction limits, you may need to provide a government-issued ID and proof of address.",
+            "For basic accounts, you only need a valid email address." +
+            " For higher transaction limits, you may need to provide a" +
+            " government-issued ID and proof of address.",
         },
         {
           question: "Is PayNext available in my country?",
           answer:
-            "PayNext is available in over 150 countries worldwide. Check our supported countries list during registration to confirm availability in your region.",
+            "PayNext is available in over 150 countries worldwide." +
+            " Check our supported countries list during registration" +
+            " to confirm availability in your region.",
         },
       ],
     },
@@ -67,22 +73,30 @@ const HelpCenter = () => {
         {
           question: "How do I send money?",
           answer:
-            "Log in to your account, click 'Send Money', enter the recipient's email or phone number, specify the amount, and confirm the transaction.",
+            "Log in to your account, click 'Send Money', enter the" +
+            " recipient's email or phone number, specify the amount," +
+            " and confirm the transaction.",
         },
         {
           question: "What are the transaction fees?",
           answer:
-            "Personal accounts: Free for up to $500/month. Business accounts: 1.5% per transaction. Enterprise: Custom pricing. No hidden fees!",
+            "Personal accounts: Free for up to $500/month." +
+            " Business accounts: 1.5% per transaction." +
+            " Enterprise: Custom pricing. No hidden fees!",
         },
         {
           question: "How long do transactions take?",
           answer:
-            "Standard transactions: 1-3 business days. Fast processing: Same day. Instant transfers: Available for Business and Enterprise accounts.",
+            "Standard transactions: 1-3 business days." +
+            " Fast processing: Same day. Instant transfers:" +
+            " Available for Business and Enterprise accounts.",
         },
         {
           question: "Can I cancel a transaction?",
           answer:
-            "Transactions can be cancelled within 30 minutes of initiation if they haven't been processed yet. Contact support immediately if you need assistance.",
+            "Transactions can be cancelled within 30 minutes of" +
+            " initiation if they haven't been processed yet." +
+            " Contact support immediately if you need assistance.",
         },
       ],
     },
@@ -94,17 +108,23 @@ const HelpCenter = () => {
         {
           question: "How secure is PayNext?",
           answer:
-            "We use bank-level 256-bit SSL encryption, two-factor authentication, and comply with PCI DSS standards. Your data is protected with multiple security layers.",
+            "We use bank-level 256-bit SSL encryption, two-factor" +
+            " authentication, and comply with PCI DSS standards." +
+            " Your data is protected with multiple security layers.",
         },
         {
           question: "What is two-factor authentication?",
           answer:
-            "2FA adds an extra layer of security by requiring a code from your phone in addition to your password. We highly recommend enabling it in your account settings.",
+            "2FA adds an extra layer of security by requiring a code" +
+            " from your phone in addition to your password." +
+            " We highly recommend enabling it in your account settings.",
         },
         {
           question: "What should I do if I suspect fraud?",
           answer:
-            "Immediately contact our support team at support@paynext.com or call our 24/7 fraud hotline. We'll investigate and take appropriate action to protect your account.",
+            "Immediately contact our support team at" +
+            " support@paynext.com or call our 24/7 fraud hotline." +
+            " We'll investigate and take action to protect your account.",
         },
       ],
     },
@@ -116,17 +136,23 @@ const HelpCenter = () => {
         {
           question: "How do I update my profile information?",
           answer:
-            "Go to Settings > Profile, make your changes, and click Save. Some changes may require re-verification for security purposes.",
+            "Go to Settings > Profile, make your changes, and click" +
+            " Save. Some changes may require re-verification for" +
+            " security purposes.",
         },
         {
           question: "How can I add a payment method?",
           answer:
-            "Navigate to Dashboard > Payment Methods > Add New. You can link bank accounts, credit cards, or debit cards. All payment methods are securely encrypted.",
+            "Navigate to Dashboard > Payment Methods > Add New." +
+            " You can link bank accounts, credit cards, or debit cards." +
+            " All payment methods are securely encrypted.",
         },
         {
           question: "How do I close my account?",
           answer:
-            "Go to Settings > Account > Close Account. Ensure all pending transactions are completed and withdraw any remaining balance before closing.",
+            "Go to Settings > Account > Close Account. Ensure all" +
+            " pending transactions are completed and withdraw any" +
+            " remaining balance before closing.",
         },
       ],
     },
@@ -276,7 +302,7 @@ const HelpCenter = () => {
         filteredCategories.every((cat) => cat.faqs.length === 0) && (
           <Box sx={{ textAlign: "center", py: 8 }}>
             <Typography variant="h5" sx={{ mb: 2 }}>
-              No results found for "{searchQuery}"
+              No results found for &ldquo;{searchQuery}&rdquo;
             </Typography>
             <Typography variant="body1" color="text.secondary">
               Try different keywords or contact our support team for assistance.
@@ -290,7 +316,8 @@ const HelpCenter = () => {
         </Typography>
         {submitSuccess && (
           <Alert severity="success" sx={{ mb: 3 }}>
-            Thank you for contacting us! We'll get back to you within 24 hours.
+            Thank you for contacting us! We&apos;ll get back to you within 24
+            hours.
           </Alert>
         )}
         <form onSubmit={handleContactSubmit}>
@@ -335,7 +362,10 @@ const HelpCenter = () => {
                 rows={6}
                 value={contactForm.message}
                 onChange={handleContactFormChange}
-                placeholder="Please provide as much detail as possible about the problem you're experiencing..."
+                placeholder={
+                  "Please provide as much detail as possible" +
+                  " about the problem you're experiencing..."
+                }
                 required
               />
             </Grid>

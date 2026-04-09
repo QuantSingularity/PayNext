@@ -19,7 +19,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { authService } from "../services/api";
 
 const Register = () => {
@@ -316,11 +316,11 @@ const Register = () => {
               label={
                 <Typography variant="body2">
                   I accept the{" "}
-                  <Link href="/terms" target="_blank">
+                  <Link component={RouterLink} to="/terms" target="_blank">
                     Terms and Conditions
                   </Link>{" "}
                   and{" "}
-                  <Link href="/privacy" target="_blank">
+                  <Link component={RouterLink} to="/privacy" target="_blank">
                     Privacy Policy
                   </Link>
                 </Typography>
@@ -397,7 +397,7 @@ const Register = () => {
             </Box>
 
             <Box sx={{ mt: 3, textAlign: "center" }}>
-              <Link href="/login" variant="body2">
+              <Link component={RouterLink} to="/login" variant="body2">
                 Already have an account? Sign In
               </Link>
             </Box>

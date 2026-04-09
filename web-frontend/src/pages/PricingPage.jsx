@@ -93,7 +93,8 @@ const PricingPage = () => {
           color="text.secondary"
           sx={{ mb: 4, maxWidth: 700, mx: "auto" }}
         >
-          Choose the plan that's right for you. No hidden fees, cancel anytime.
+          Choose the plan that&apos;s right for you. No hidden fees, cancel
+          anytime.
         </Typography>
         <FormControlLabel
           control={

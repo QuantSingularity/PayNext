@@ -29,7 +29,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AnimatedElement,
@@ -52,7 +52,7 @@ const Dashboard = () => {
     pendingTransactions: 0,
   });
 
-  const fetchDashboardData = async (isRefresh = false) => {
+  const fetchDashboardData = useCallback(async (isRefresh = false) => {
     try {
       if (isRefresh) {
         setRefreshing(true);
@@ -127,11 +127,11 @@ const Dashboard = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [fetchDashboardData]);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("en-US", {

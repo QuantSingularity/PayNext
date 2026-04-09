@@ -61,8 +61,8 @@ const AboutPage = () => {
           color="text.secondary"
           sx={{ maxWidth: 800, mx: "auto", lineHeight: 1.6 }}
         >
-          We're on a mission to make payments simple, fast, and accessible for
-          everyone, everywhere.
+          We&apos;re on a mission to make payments simple, fast, and accessible
+          for everyone, everywhere.
         </Typography>
       </Box>
 
@@ -116,9 +116,9 @@ const AboutPage = () => {
             countries, processing billions in transactions.
           </Typography>
           <Typography variant="body1" sx={{ lineHeight: 1.8 }}>
-            But we're just getting started. We continue to innovate and expand
-            our services, always keeping our users' needs at the center of
-            everything we do.
+            But we&apos;re just getting started. We continue to innovate and
+            expand our services, always keeping our users&apos; needs at the
+            center of everything we do.
           </Typography>
         </Paper>
       </Box>

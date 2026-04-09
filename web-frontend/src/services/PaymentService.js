@@ -22,11 +22,29 @@ const getPaymentById = async (id) => {
   return response.data;
 };
 
+const getBalance = async () => {
+  const response = await api.get(`${API_BASE}/balance`);
+  return response.data;
+};
+
+const getPaymentMethods = async () => {
+  const response = await api.get(`${API_BASE}/methods`);
+  return response.data;
+};
+
+const addPaymentMethod = async (methodData) => {
+  const response = await api.post(`${API_BASE}/methods`, methodData);
+  return response.data;
+};
+
 const PaymentService = {
   createPayment,
   makePayment,
   getPaymentHistory,
   getPaymentById,
+  getBalance,
+  getPaymentMethods,
+  addPaymentMethod,
 };
 
 export default PaymentService;

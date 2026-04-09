@@ -14,7 +14,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { authService } from "../services/api";
 
 const Login = ({ onLogin }) => {
@@ -142,7 +142,7 @@ const Login = ({ onLogin }) => {
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 2, py: 1.5, backgroundColor: "#1976d2" }}
+              sx={{ mt: 3, mb: 2, py: 1.5 }}
               disabled={loading}
             >
               {loading ? (
@@ -153,13 +153,17 @@ const Login = ({ onLogin }) => {
             </Button>
             <Grid container>
               <Grid item xs>
-                <Link href="#" variant="body2">
+                <Link
+                  component={RouterLink}
+                  to="/forgot-password"
+                  variant="body2"
+                >
                   Forgot password?
                 </Link>
               </Grid>
               <Grid item>
-                <Link href="/register" variant="body2">
-                  {"Don't have an account? Sign Up"}
+                <Link component={RouterLink} to="/register" variant="body2">
+                  Don&apos;t have an account? Sign Up
                 </Link>
               </Grid>
             </Grid>

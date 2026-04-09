@@ -27,77 +27,77 @@ import {
 } from "../components/AnimationComponents";
 import { simulateApiCall } from "../services/api";
 
+const MOCK_TRANSACTIONS = [
+  {
+    id: "tx1",
+    type: "incoming",
+    amount: 1250.0,
+    date: "2025-04-10T14:32:21",
+    description: "Salary payment",
+    sender: "Acme Corp",
+    status: "completed",
+  },
+  {
+    id: "tx2",
+    type: "outgoing",
+    amount: 42.5,
+    date: "2025-04-09T09:15:00",
+    description: "Coffee shop",
+    recipient: "Starbucks",
+    status: "completed",
+  },
+  {
+    id: "tx3",
+    type: "outgoing",
+    amount: 850.0,
+    date: "2025-04-05T18:22:10",
+    description: "Rent payment",
+    recipient: "Property Management Inc",
+    status: "completed",
+  },
+  {
+    id: "tx4",
+    type: "incoming",
+    amount: 125.0,
+    date: "2025-04-03T12:05:45",
+    description: "Refund",
+    sender: "Amazon",
+    status: "completed",
+  },
+  {
+    id: "tx5",
+    type: "outgoing",
+    amount: 35.99,
+    date: "2025-04-01T20:15:30",
+    description: "Subscription",
+    recipient: "Netflix",
+    status: "completed",
+  },
+  {
+    id: "tx6",
+    type: "outgoing",
+    amount: 200.0,
+    date: "2025-03-28T11:00:00",
+    description: "Transfer to savings",
+    recipient: "Chase Savings",
+    status: "pending",
+  },
+  {
+    id: "tx7",
+    type: "incoming",
+    amount: 75.0,
+    date: "2025-03-25T16:45:00",
+    description: "Freelance payment",
+    sender: "Client XYZ",
+    status: "completed",
+  },
+];
+
 const TransactionHistory = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [error, setError] = useState("");
-
-  const MOCK_TRANSACTIONS = [
-    {
-      id: "tx1",
-      type: "incoming",
-      amount: 1250.0,
-      date: "2025-04-10T14:32:21",
-      description: "Salary payment",
-      sender: "Acme Corp",
-      status: "completed",
-    },
-    {
-      id: "tx2",
-      type: "outgoing",
-      amount: 42.5,
-      date: "2025-04-09T09:15:00",
-      description: "Coffee shop",
-      recipient: "Starbucks",
-      status: "completed",
-    },
-    {
-      id: "tx3",
-      type: "outgoing",
-      amount: 850.0,
-      date: "2025-04-05T18:22:10",
-      description: "Rent payment",
-      recipient: "Property Management Inc",
-      status: "completed",
-    },
-    {
-      id: "tx4",
-      type: "incoming",
-      amount: 125.0,
-      date: "2025-04-03T12:05:45",
-      description: "Refund",
-      sender: "Amazon",
-      status: "completed",
-    },
-    {
-      id: "tx5",
-      type: "outgoing",
-      amount: 35.99,
-      date: "2025-04-01T20:15:30",
-      description: "Subscription",
-      recipient: "Netflix",
-      status: "completed",
-    },
-    {
-      id: "tx6",
-      type: "outgoing",
-      amount: 200.0,
-      date: "2025-03-28T11:00:00",
-      description: "Transfer to savings",
-      recipient: "Chase Savings",
-      status: "pending",
-    },
-    {
-      id: "tx7",
-      type: "incoming",
-      amount: 75.0,
-      date: "2025-03-25T16:45:00",
-      description: "Freelance payment",
-      sender: "Client XYZ",
-      status: "completed",
-    },
-  ];
 
   useEffect(() => {
     const fetchTransactions = async () => {

@@ -7,6 +7,7 @@ import PageTransition from "./components/PageTransition";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AboutPage from "./pages/AboutPage";
 import Dashboard from "./pages/Dashboard";
+import ForgotPassword from "./pages/ForgotPassword";
 import HelpCenter from "./pages/HelpCenter";
 import Homepage from "./pages/Homepage";
 import Login from "./pages/Login";
@@ -39,6 +40,7 @@ const App = () => {
               <Route path="/help" element={<HelpCenter />} />
               <Route path="/login" element={<Login onLogin={handleLogin} />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route
                 path="/dashboard"
                 element={

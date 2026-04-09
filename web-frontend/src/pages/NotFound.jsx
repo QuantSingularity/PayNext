@@ -26,7 +26,7 @@ const NotFound = () => {
           Page Not Found
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-          The page you're looking for doesn't exist or has been moved.
+          The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </Typography>
         <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
           <Button

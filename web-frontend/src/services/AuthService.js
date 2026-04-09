@@ -12,13 +12,14 @@ const login = async (username, password) => {
   return response.data;
 };
 
-const register = async (username, email, password, extraData = {}) => {
-  const response = await api.post(`${API_BASE}/register`, {
-    username,
-    email,
-    password,
-    ...extraData,
-  });
+const register = async (usernameOrData, email, password, extraData = {}) => {
+  let payload;
+  if (typeof usernameOrData === "object" && usernameOrData !== null) {
+    payload = usernameOrData;
+  } else {
+    payload = { username: usernameOrData, email, password, ...extraData };
+  }
+  const response = await api.post(`${API_BASE}/register`, payload);
   return response.data;
 };
 

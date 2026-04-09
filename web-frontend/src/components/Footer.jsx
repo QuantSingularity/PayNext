@@ -12,14 +12,10 @@ import {
   IconButton,
   Link,
   Typography,
-  useMediaQuery,
-  useTheme,
 } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
 
 const Footer = () => {
-  const theme = useTheme();
-  const _isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-
   const footerLinks = [
     {
       title: "Products",
@@ -138,7 +134,8 @@ const Footer = () => {
                 {section.links.map((link, linkIndex) => (
                   <Box component="li" key={linkIndex} sx={{ mb: 1 }}>
                     <Link
-                      href={link.url}
+                      component={RouterLink}
+                      to={link.url}
                       variant="body2"
                       color="text.secondary"
                       sx={{
@@ -175,7 +172,7 @@ const Footer = () => {
             color="text.secondary"
             sx={{ mb: { xs: 2, sm: 0 } }}
           >
-            © {new Date().getFullYear()} PayNext. All rights reserved.
+            &copy; {new Date().getFullYear()} PayNext. All rights reserved.
           </Typography>
           <Box
             sx={{
@@ -186,7 +183,8 @@ const Footer = () => {
             }}
           >
             <Link
-              href="/privacy"
+              component={RouterLink}
+              to="/privacy"
               variant="body2"
               color="text.secondary"
               sx={{ textDecoration: "none" }}
@@ -194,7 +192,8 @@ const Footer = () => {
               Privacy Policy
             </Link>
             <Link
-              href="/terms"
+              component={RouterLink}
+              to="/terms"
               variant="body2"
               color="text.secondary"
               sx={{ textDecoration: "none" }}
@@ -202,7 +201,8 @@ const Footer = () => {
               Terms of Service
             </Link>
             <Link
-              href="/cookies"
+              component={RouterLink}
+              to="/cookies"
               variant="body2"
               color="text.secondary"
               sx={{ textDecoration: "none" }}

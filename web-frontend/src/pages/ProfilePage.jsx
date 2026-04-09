@@ -109,8 +109,10 @@ const ProfilePage = () => {
     }
   };
 
+  const firstInitial = profile.firstName?.[0] || "";
+  const lastInitial = profile.lastName?.[0] || "";
   const initials =
-    `${profile.firstName?.[0] || ""}${profile.lastName?.[0] || ""}`.toUpperCase() ||
+    `${firstInitial}${lastInitial}`.toUpperCase() ||
     profile.username?.[0]?.toUpperCase() ||
     "U";
 
