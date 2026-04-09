@@ -203,3 +203,7 @@ target/
 
 # Ruff cache
 .ruff_cache/
+
+# Machine Learning Artifacts
+*.joblib
+*.csv
