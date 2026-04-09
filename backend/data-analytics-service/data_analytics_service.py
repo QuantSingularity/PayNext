@@ -135,7 +135,7 @@ if __name__ == "__main__":
     sys.path.insert(
         0,
         os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "anomaly_detection")
+            os.path.join(os.path.dirname(__file__), "..", "anomaly-detection-service")
         ),
     )
     from anomaly_data_generator import generate_synthetic_transaction_data

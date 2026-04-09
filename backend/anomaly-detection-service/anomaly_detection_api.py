@@ -91,9 +91,10 @@ async def predict_anomaly(transaction: Transaction):
         transaction_df = pd.DataFrame([transaction.model_dump()])
         processed_transaction = anomaly_detector.preprocess(transaction_df)
         prediction = anomaly_detector.predict(processed_transaction)[0]
-        score = float(
+        raw_score = float(
             anomaly_detector.model.decision_function(processed_transaction)[0]
         )
+        score = float(-raw_score)
         return AnomalyPredictionOutput(
             is_anomaly=bool(prediction), prediction_score=score
         )

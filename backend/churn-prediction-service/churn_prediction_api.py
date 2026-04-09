@@ -14,7 +14,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-model_dir = os.path.join(os.path.dirname(__file__), "..")
+model_dir = os.path.dirname(__file__)
 
 churn_model = None
 churn_scaler = None

@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// Create axios instance with default config
 const api = axios.create({
   baseURL: "/api",
   headers: {
@@ -8,7 +7,6 @@ const api = axios.create({
   },
 });
 
-// Add request interceptor to include auth token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -20,16 +18,14 @@ api.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// Add response interceptor to handle common errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
-      // Handle 401 Unauthorized errors
       if (error.response.status === 401) {
         localStorage.removeItem("token");
         localStorage.removeItem("isAuthenticated");
-        // Redirect to login if not already there
+        localStorage.removeItem("user");
         if (window.location.pathname !== "/login") {
           window.location.href = "/login";
         }
@@ -39,10 +35,9 @@ api.interceptors.response.use(
   },
 );
 
-// Auth services
 export const authService = {
-  login: async (email, password) => {
-    const response = await api.post("/auth/login", { email, password });
+  login: async (username, password) => {
+    const response = await api.post("/users/login", { username, password });
     if (response.data.token) {
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("isAuthenticated", "true");
@@ -51,23 +46,32 @@ export const authService = {
   },
 
   register: async (userData) => {
-    const response = await api.post("/auth/register", userData);
+    const response = await api.post("/users/register", userData);
     return response.data;
   },
 
   logout: () => {
     localStorage.removeItem("token");
     localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("user");
   },
 
   getCurrentUser: async () => {
     const response = await api.get("/users/me");
     return response.data;
   },
+
+  isAuthenticated: () => {
+    return localStorage.getItem("isAuthenticated") === "true" && !!localStorage.getItem("token");
+  },
 };
 
-// User services
 export const userService = {
+  getUserProfile: async () => {
+    const response = await api.get("/users/profile");
+    return response.data;
+  },
+
   updateProfile: async (userData) => {
     const response = await api.put("/users/profile", userData);
     return response.data;
@@ -79,15 +83,24 @@ export const userService = {
   },
 };
 
-// Payment services
 export const paymentService = {
   sendMoney: async (paymentData) => {
-    const response = await api.post("/payments/send", paymentData);
+    const response = await api.post("/payments", paymentData);
+    return response.data;
+  },
+
+  getPaymentHistory: async () => {
+    const response = await api.get("/payments");
     return response.data;
   },
 
   getBalance: async () => {
     const response = await api.get("/payments/balance");
+    return response.data;
+  },
+
+  getPaymentById: async (id) => {
+    const response = await api.get(`/payments/${id}`);
     return response.data;
   },
 
@@ -102,7 +115,6 @@ export const paymentService = {
   },
 };
 
-// Helper function to simulate API calls for demo purposes
 export const simulateApiCall = (data, delay = 1000, shouldFail = false) => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {

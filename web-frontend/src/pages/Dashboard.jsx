@@ -16,6 +16,7 @@ import {
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   Container,
   Grid,
   IconButton,
@@ -38,92 +39,97 @@ import { simulateApiCall } from "../services/api";
 
 const Dashboard = () => {
   const theme = useTheme();
-  const _isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const navigate = useNavigate();
 
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState([]);
-  const [_loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState({
     monthlySpending: 0,
     savedThisMonth: 0,
     pendingTransactions: 0,
   });
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
+  const fetchDashboardData = async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
         setLoading(true);
-
-        // Simulate API calls for demo purposes
-        const balanceResponse = await simulateApiCall({ balance: 2547.63 });
-
-        const transactionsResponse = await simulateApiCall({
-          transactions: [
-            {
-              id: "tx1",
-              type: "incoming",
-              amount: 1250.0,
-              date: "2025-04-10T14:32:21",
-              description: "Salary payment",
-              sender: "Acme Corp",
-              status: "completed",
-            },
-            {
-              id: "tx2",
-              type: "outgoing",
-              amount: 42.5,
-              date: "2025-04-09T09:15:00",
-              description: "Coffee shop",
-              recipient: "Starbucks",
-              status: "completed",
-            },
-            {
-              id: "tx3",
-              type: "outgoing",
-              amount: 850.0,
-              date: "2025-04-05T18:22:10",
-              description: "Rent payment",
-              recipient: "Property Management Inc",
-              status: "completed",
-            },
-            {
-              id: "tx4",
-              type: "incoming",
-              amount: 125.0,
-              date: "2025-04-03T12:05:45",
-              description: "Refund",
-              sender: "Amazon",
-              status: "completed",
-            },
-            {
-              id: "tx5",
-              type: "outgoing",
-              amount: 35.99,
-              date: "2025-04-01T20:15:30",
-              description: "Subscription",
-              recipient: "Netflix",
-              status: "completed",
-            },
-          ],
-        });
-
-        const statsResponse = await simulateApiCall({
-          monthlySpending: 1250.75,
-          savedThisMonth: 450.25,
-          pendingTransactions: 2,
-        });
-
-        setBalance(balanceResponse.data.balance);
-        setTransactions(transactionsResponse.data.transactions);
-        setStats(statsResponse.data);
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-      } finally {
-        setLoading(false);
       }
-    };
 
+      const balanceResponse = await simulateApiCall({ balance: 2547.63 });
+
+      const transactionsResponse = await simulateApiCall({
+        transactions: [
+          {
+            id: "tx1",
+            type: "incoming",
+            amount: 1250.0,
+            date: "2025-04-10T14:32:21",
+            description: "Salary payment",
+            sender: "Acme Corp",
+            status: "completed",
+          },
+          {
+            id: "tx2",
+            type: "outgoing",
+            amount: 42.5,
+            date: "2025-04-09T09:15:00",
+            description: "Coffee shop",
+            recipient: "Starbucks",
+            status: "completed",
+          },
+          {
+            id: "tx3",
+            type: "outgoing",
+            amount: 850.0,
+            date: "2025-04-05T18:22:10",
+            description: "Rent payment",
+            recipient: "Property Management Inc",
+            status: "completed",
+          },
+          {
+            id: "tx4",
+            type: "incoming",
+            amount: 125.0,
+            date: "2025-04-03T12:05:45",
+            description: "Refund",
+            sender: "Amazon",
+            status: "completed",
+          },
+          {
+            id: "tx5",
+            type: "outgoing",
+            amount: 35.99,
+            date: "2025-04-01T20:15:30",
+            description: "Subscription",
+            recipient: "Netflix",
+            status: "completed",
+          },
+        ],
+      });
+
+      const statsResponse = await simulateApiCall({
+        monthlySpending: 1250.75,
+        savedThisMonth: 450.25,
+        pendingTransactions: 2,
+      });
+
+      setBalance(balanceResponse.data.balance);
+      setTransactions(transactionsResponse.data.transactions);
+      setStats(statsResponse.data);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     fetchDashboardData();
   }, []);
 
@@ -147,6 +153,21 @@ const Dashboard = () => {
     navigate("/send-money");
   };
 
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "60vh",
+        }}
+      >
+        <CircularProgress size={48} />
+      </Box>
+    );
+  }
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <AnimatedElement>
@@ -160,7 +181,6 @@ const Dashboard = () => {
       </AnimatedElement>
 
       <Grid container spacing={4}>
-        {/* Balance Card */}
         <Grid item xs={12} md={6} lg={4}>
           <AnimatedElement animation="fadeInUp" delay={0.1}>
             <Paper
@@ -184,8 +204,17 @@ const Dashboard = () => {
                 <Typography variant="h6" sx={{ fontWeight: "medium" }}>
                   Available Balance
                 </Typography>
-                <IconButton size="small" sx={{ color: "white" }}>
-                  <RefreshIcon />
+                <IconButton
+                  size="small"
+                  sx={{ color: "white" }}
+                  onClick={() => fetchDashboardData(true)}
+                  disabled={refreshing}
+                >
+                  {refreshing ? (
+                    <CircularProgress size={18} sx={{ color: "white" }} />
+                  ) : (
+                    <RefreshIcon />
+                  )}
                 </IconButton>
               </Box>
 
@@ -193,7 +222,7 @@ const Dashboard = () => {
                 {formatCurrency(balance)}
               </Typography>
 
-              <Box sx={{ display: "flex", gap: 2 }}>
+              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
                 <Button
                   variant="contained"
                   color="secondary"
@@ -232,7 +261,6 @@ const Dashboard = () => {
           </AnimatedElement>
         </Grid>
 
-        {/* Quick Stats */}
         <Grid item xs={12} md={6} lg={8}>
           <AnimatedElement animation="fadeInUp" delay={0.2}>
             <Paper
@@ -348,7 +376,6 @@ const Dashboard = () => {
           </AnimatedElement>
         </Grid>
 
-        {/* Recent Transactions */}
         <Grid item xs={12}>
           <AnimatedElement animation="fadeInUp" delay={0.3}>
             <Paper
@@ -369,7 +396,11 @@ const Dashboard = () => {
                 <Typography variant="h6" sx={{ fontWeight: "medium" }}>
                   Recent Transactions
                 </Typography>
-                <Button endIcon={<HistoryIcon />} size="small">
+                <Button
+                  endIcon={<HistoryIcon />}
+                  size="small"
+                  onClick={() => navigate("/transactions")}
+                >
                   View All
                 </Button>
               </Box>
@@ -457,7 +488,6 @@ const Dashboard = () => {
           </AnimatedElement>
         </Grid>
 
-        {/* Payment Methods */}
         <Grid item xs={12} md={6}>
           <AnimatedElement animation="fadeInLeft" delay={0.4}>
             <Paper
@@ -527,7 +557,6 @@ const Dashboard = () => {
           </AnimatedElement>
         </Grid>
 
-        {/* Quick Actions */}
         <Grid item xs={12} md={6}>
           <AnimatedElement animation="fadeInRight" delay={0.5}>
             <Paper
@@ -549,7 +578,7 @@ const Dashboard = () => {
                     startIcon={<SendIcon />}
                     onClick={handleSendMoney}
                     sx={{
-                      p: 2,
+                      p: isMobile ? 1.5 : 2,
                       height: "100%",
                       borderRadius: 2,
                       display: "flex",
@@ -570,8 +599,9 @@ const Dashboard = () => {
                     fullWidth
                     variant="outlined"
                     startIcon={<HistoryIcon />}
+                    onClick={() => navigate("/transactions")}
                     sx={{
-                      p: 2,
+                      p: isMobile ? 1.5 : 2,
                       height: "100%",
                       borderRadius: 2,
                       display: "flex",
@@ -593,7 +623,7 @@ const Dashboard = () => {
                     variant="outlined"
                     startIcon={<CreditCardIcon />}
                     sx={{
-                      p: 2,
+                      p: isMobile ? 1.5 : 2,
                       height: "100%",
                       borderRadius: 2,
                       display: "flex",
@@ -615,7 +645,7 @@ const Dashboard = () => {
                     variant="outlined"
                     startIcon={<AccountBalanceIcon />}
                     sx={{
-                      p: 2,
+                      p: isMobile ? 1.5 : 2,
                       height: "100%",
                       borderRadius: 2,
                       display: "flex",

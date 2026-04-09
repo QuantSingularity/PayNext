@@ -31,7 +31,7 @@ def train_categorization_model(
     vectorizer = TfidfVectorizer(max_features=2000, ngram_range=(1, 2))
     X_train_vec = vectorizer.fit_transform(X_train)
     X_test_vec = vectorizer.transform(X_test)
-    model_dir = os.path.join(os.path.dirname(__file__), "..")
+    model_dir = os.path.dirname(__file__)
     joblib.dump(vectorizer, os.path.join(model_dir, "category_vectorizer.joblib"))
     param_grid = {
         "C": [0.1, 1, 10],

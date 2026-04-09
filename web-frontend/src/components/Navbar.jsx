@@ -27,7 +27,6 @@ import {
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
-// Hide AppBar on scroll down
 function HideOnScroll(props) {
   const { children } = props;
   const trigger = useScrollTrigger();
@@ -39,23 +38,25 @@ function HideOnScroll(props) {
   );
 }
 
+const getAuthStatus = () =>
+  localStorage.getItem("isAuthenticated") === "true" &&
+  !!localStorage.getItem("token");
+
 const Navbar = () => {
   const theme = useTheme();
-  const _isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const navigate = useNavigate();
   const location = useLocation();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(getAuthStatus());
   const [anchorEl, setAnchorEl] = useState(null);
   const [productsAnchorEl, setProductsAnchorEl] = useState(null);
   const [companyAnchorEl, setCompanyAnchorEl] = useState(null);
 
   useEffect(() => {
-    // Check if user is authenticated
-    const authStatus = localStorage.getItem("isAuthenticated");
-    setIsAuthenticated(authStatus === "true");
-  }, []);
+    setIsAuthenticated(getAuthStatus());
+  }, [location.pathname]);
 
   const handleDrawerToggle = () => {
     setDrawerOpen(!drawerOpen);
@@ -81,6 +82,8 @@ const Navbar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setIsAuthenticated(false);
     handleMenuClose();
     navigate("/");
@@ -92,9 +95,7 @@ const Navbar = () => {
     setDrawerOpen(false);
   };
 
-  const isActive = (path) => {
-    return location.pathname === path;
-  };
+  const isActive = (path) => location.pathname === path;
 
   const navItems = [
     {
@@ -175,9 +176,7 @@ const Navbar = () => {
                   primary={item.label}
                   primaryTypographyProps={{
                     fontWeight: isActive(item.path) ? "bold" : "medium",
-                    color: isActive(item.path)
-                      ? "primary.main"
-                      : "text.primary",
+                    color: isActive(item.path) ? "primary.main" : "text.primary",
                   }}
                 />
               </ListItem>
@@ -192,6 +191,9 @@ const Navbar = () => {
             </ListItem>
             <ListItem button onClick={() => handleNavigation("/profile")}>
               <ListItemText primary="Profile" />
+            </ListItem>
+            <ListItem button onClick={() => handleNavigation("/settings")}>
+              <ListItemText primary="Settings" />
             </ListItem>
             <ListItem button onClick={handleLogout}>
               <ListItemText primary="Logout" />
@@ -226,7 +228,6 @@ const Navbar = () => {
         >
           <Container maxWidth="lg">
             <Toolbar disableGutters sx={{ height: 70 }}>
-              {/* Logo */}
               <Typography
                 variant="h5"
                 noWrap
@@ -244,7 +245,6 @@ const Navbar = () => {
                 PayNext
               </Typography>
 
-              {/* Mobile menu icon */}
               <Box sx={{ flexGrow: 0, display: { xs: "flex", md: "none" } }}>
                 <IconButton
                   size="large"
@@ -258,7 +258,6 @@ const Navbar = () => {
                 </IconButton>
               </Box>
 
-              {/* Mobile logo */}
               <Typography
                 variant="h6"
                 noWrap
@@ -276,7 +275,6 @@ const Navbar = () => {
                 PayNext
               </Typography>
 
-              {/* Desktop navigation */}
               <Box
                 sx={{ flexGrow: 1, display: { xs: "none", md: "flex" }, ml: 4 }}
               >
@@ -368,9 +366,7 @@ const Navbar = () => {
                             ? "primary.main"
                             : "text.primary",
                           fontWeight: isActive(item.path) ? "bold" : "medium",
-                          borderBottom: isActive(item.path)
-                            ? "2px solid"
-                            : "none",
+                          borderBottom: isActive(item.path) ? "2px solid" : "none",
                           borderColor: "primary.main",
                           borderRadius: 0,
                           "&:hover": {
@@ -386,7 +382,6 @@ const Navbar = () => {
                 ))}
               </Box>
 
-              {/* Auth buttons or user menu */}
               <Box sx={{ display: { xs: "none", md: "flex" } }}>
                 {isAuthenticated ? (
                   <>
@@ -418,10 +413,7 @@ const Navbar = () => {
                       sx={{ mt: 1 }}
                       PaperProps={{
                         elevation: 2,
-                        sx: {
-                          borderRadius: 2,
-                          minWidth: 180,
-                        },
+                        sx: { borderRadius: 2, minWidth: 180 },
                       }}
                     >
                       <MenuItem onClick={() => handleNavigation("/profile")}>
@@ -459,14 +451,11 @@ const Navbar = () => {
         </AppBar>
       </HideOnScroll>
 
-      {/* Mobile drawer */}
       <Drawer
         anchor="left"
         open={drawerOpen}
         onClose={handleDrawerToggle}
-        ModalProps={{
-          keepMounted: true, // Better open performance on mobile
-        }}
+        ModalProps={{ keepMounted: true }}
         sx={{
           display: { xs: "block", md: "none" },
           "& .MuiDrawer-paper": { boxSizing: "border-box", width: 280 },
@@ -475,7 +464,6 @@ const Navbar = () => {
         {drawer}
       </Drawer>
 
-      {/* Toolbar placeholder to prevent content from hiding behind the AppBar */}
       <Toolbar />
     </>
   );

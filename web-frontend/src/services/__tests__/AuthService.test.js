@@ -1,132 +1,161 @@
 import AuthService from "../AuthService";
-import api from "../api"; // Assuming api.js handles actual HTTP requests
+import api from "../api";
 
-// Mock the api module
-jest.mock("../api");
+jest.mock("../api", () => ({
+  post: jest.fn(),
+  get: jest.fn(),
+  put: jest.fn(),
+  delete: jest.fn(),
+  interceptors: {
+    request: { use: jest.fn() },
+    response: { use: jest.fn() },
+  },
+}));
 
 describe("AuthService", () => {
-  afterEach(() => {
-    // Clear mock calls after each test
+  beforeEach(() => {
+    localStorage.clear();
     jest.clearAllMocks();
-    // Clear potential localStorage changes if logout is tested
-    // localStorage.clear();
   });
 
-  // --- Login Tests ---
-  it("should call the login API endpoint with correct credentials", async () => {
-    const email = "test@example.com";
-    const password = "password123";
-    const mockResponse = {
-      success: true,
-      token: "fake-token",
-      user: { id: 1, email },
-    };
+  describe("login", () => {
+    it("should call the login API endpoint with correct credentials", async () => {
+      const username = "testuser";
+      const password = "password123";
+      const mockResponse = {
+        data: { token: "fake-token", username },
+      };
+      api.post.mockResolvedValue(mockResponse);
 
-    // Configure the mock for the 'post' method of the api module
-    api.post.mockResolvedValue(mockResponse);
+      await AuthService.login(username, password);
 
-    await AuthService.login(email, password);
+      expect(api.post).toHaveBeenCalledTimes(1);
+      expect(api.post).toHaveBeenCalledWith("/users/login", { username, password });
+    });
 
-    expect(api.post).toHaveBeenCalledTimes(1);
-    expect(api.post).toHaveBeenCalledWith("/auth/login", { email, password });
+    it("should store token in localStorage on successful login", async () => {
+      const mockResponse = {
+        data: { token: "fake-token", username: "testuser" },
+      };
+      api.post.mockResolvedValue(mockResponse);
+
+      await AuthService.login("testuser", "password123");
+
+      expect(localStorage.getItem("token")).toBe("fake-token");
+      expect(localStorage.getItem("isAuthenticated")).toBe("true");
+    });
+
+    it("should return user data on successful login", async () => {
+      const mockResponse = {
+        data: { token: "fake-token", username: "testuser" },
+      };
+      api.post.mockResolvedValue(mockResponse);
+
+      const result = await AuthService.login("testuser", "password123");
+
+      expect(result).toEqual(mockResponse.data);
+    });
+
+    it("should throw an error on login API failure", async () => {
+      const errorMessage = "Invalid credentials";
+      api.post.mockRejectedValue(new Error(errorMessage));
+
+      await expect(AuthService.login("testuser", "wrongpass")).rejects.toThrow(
+        errorMessage,
+      );
+    });
   });
 
-  it("should return user data and token on successful login", async () => {
-    const email = "test@example.com";
-    const password = "password123";
-    const mockResponse = {
-      success: true,
-      token: "fake-token",
-      user: { id: 1, email },
-    };
-    api.post.mockResolvedValue(mockResponse);
+  describe("register", () => {
+    it("should call the register API endpoint with correct user data", async () => {
+      const username = "newuser";
+      const email = "new@example.com";
+      const password = "password123";
+      const mockResponse = {
+        data: { id: 1, username, email },
+      };
+      api.post.mockResolvedValue(mockResponse);
 
-    const result = await AuthService.login(email, password);
+      await AuthService.register(username, email, password);
 
-    expect(result).toEqual(mockResponse);
-    // Optionally check if token is stored (if applicable)
-    // expect(localStorage.getItem('token')).toBe('fake-token');
+      expect(api.post).toHaveBeenCalledTimes(1);
+      expect(api.post).toHaveBeenCalledWith("/users/register", {
+        username,
+        email,
+        password,
+      });
+    });
+
+    it("should return response data on successful registration", async () => {
+      const mockResponse = {
+        data: { id: 1, username: "newuser", email: "new@example.com" },
+      };
+      api.post.mockResolvedValue(mockResponse);
+
+      const result = await AuthService.register("newuser", "new@example.com", "password123");
+
+      expect(result).toEqual(mockResponse.data);
+    });
+
+    it("should throw an error on register API failure", async () => {
+      const errorMessage = "Email already exists";
+      api.post.mockRejectedValue(new Error(errorMessage));
+
+      await expect(
+        AuthService.register("newuser", "taken@example.com", "password123"),
+      ).rejects.toThrow(errorMessage);
+    });
   });
 
-  it("should throw an error on login API failure", async () => {
-    const email = "test@example.com";
-    const password = "password123";
-    const errorMessage = "Invalid credentials";
-    api.post.mockRejectedValue(new Error(errorMessage));
+  describe("logout", () => {
+    it("should clear authentication data from localStorage", () => {
+      localStorage.setItem("token", "fake-token");
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("user", JSON.stringify({ username: "testuser" }));
 
-    await expect(AuthService.login(email, password)).rejects.toThrow(
-      errorMessage,
-    );
+      AuthService.logout();
+
+      expect(localStorage.getItem("token")).toBeNull();
+      expect(localStorage.getItem("isAuthenticated")).toBeNull();
+      expect(localStorage.getItem("user")).toBeNull();
+    });
   });
 
-  // --- Register Tests ---
-  it("should call the register API endpoint with correct user data", async () => {
-    const userData = {
-      username: "testuser",
-      email: "new@example.com",
-      password: "password123",
-    };
-    const mockResponse = {
-      success: true,
-      message: "User registered successfully",
-    }; // Adjust based on actual API response
-    api.post.mockResolvedValue(mockResponse);
+  describe("getCurrentUser", () => {
+    it("should return parsed user from localStorage", () => {
+      const user = { username: "testuser", email: "test@example.com" };
+      localStorage.setItem("user", JSON.stringify(user));
 
-    await AuthService.register(
-      userData.username,
-      userData.email,
-      userData.password,
-    );
+      const result = AuthService.getCurrentUser();
 
-    expect(api.post).toHaveBeenCalledTimes(1);
-    expect(api.post).toHaveBeenCalledWith("/auth/register", userData);
+      expect(result).toEqual(user);
+    });
+
+    it("should return null if no user in localStorage", () => {
+      localStorage.clear();
+      const result = AuthService.getCurrentUser();
+      expect(result).toBeNull();
+    });
   });
 
-  it("should return success message on successful registration", async () => {
-    const userData = {
-      username: "testuser",
-      email: "new@example.com",
-      password: "password123",
-    };
-    const mockResponse = {
-      success: true,
-      message: "User registered successfully",
-    };
-    api.post.mockResolvedValue(mockResponse);
+  describe("isAuthenticated", () => {
+    it("should return true when token and flag are set", () => {
+      localStorage.setItem("token", "fake-token");
+      localStorage.setItem("isAuthenticated", "true");
 
-    const result = await AuthService.register(
-      userData.username,
-      userData.email,
-      userData.password,
-    );
+      expect(AuthService.isAuthenticated()).toBe(true);
+    });
 
-    expect(result).toEqual(mockResponse);
+    it("should return false when token is missing", () => {
+      localStorage.setItem("isAuthenticated", "true");
+
+      expect(AuthService.isAuthenticated()).toBe(false);
+    });
+
+    it("should return false when isAuthenticated flag is missing", () => {
+      localStorage.setItem("token", "fake-token");
+
+      expect(AuthService.isAuthenticated()).toBe(false);
+    });
   });
-
-  it("should throw an error on register API failure", async () => {
-    const userData = {
-      username: "testuser",
-      email: "new@example.com",
-      password: "password123",
-    };
-    const errorMessage = "Email already exists";
-    api.post.mockRejectedValue(new Error(errorMessage));
-
-    await expect(
-      AuthService.register(
-        userData.username,
-        userData.email,
-        userData.password,
-      ),
-    ).rejects.toThrow(errorMessage);
-  });
-
-  // --- Logout Test (Example if it exists and uses localStorage) ---
-  /*
-  it('should clear authentication token on logout', () => {
-    localStorage.setItem('token', 'fake-token'); // Set up initial state
-    AuthService.logout();
-    expect(localStorage.getItem('token')).toBeNull();
-  });
-  */
 });

@@ -7,17 +7,17 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 
-const PageLoader = ({ loading, children }) => {
-  const [showLoader, setShowLoader] = useState(true);
+const PageLoader = ({ loading = false, children }) => {
+  const [showLoader, setShowLoader] = useState(false);
 
   useEffect(() => {
-    if (!loading) {
+    if (loading) {
+      setShowLoader(true);
+    } else {
       const timer = setTimeout(() => {
         setShowLoader(false);
-      }, 600); // Delay hiding the loader for a smoother transition
+      }, 300);
       return () => clearTimeout(timer);
-    } else {
-      setShowLoader(true);
     }
   }, [loading]);
 
@@ -31,7 +31,7 @@ const PageLoader = ({ loading, children }) => {
         }}
         open={showLoader}
       >
-        <Fade in={showLoader} timeout={800}>
+        <Fade in={showLoader} timeout={400}>
           <Box
             sx={{
               display: "flex",
@@ -46,11 +46,7 @@ const PageLoader = ({ loading, children }) => {
           </Box>
         </Fade>
       </Backdrop>
-      <Fade in={!showLoader} timeout={800}>
-        <Box sx={{ visibility: showLoader ? "hidden" : "visible" }}>
-          {children}
-        </Box>
-      </Fade>
+      <Box>{children}</Box>
     </>
   );
 };

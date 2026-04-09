@@ -1,30 +1,26 @@
-import axios from "axios";
+import api from "./api";
 
-// Use environment variable or default to localhost API gateway
-const API_URL =
-  process.env.REACT_APP_API_BASE_URL || "http://localhost:8002/users/";
+const API_BASE = "/users";
 
 const getUserProfile = async () => {
-  const response = await axios.get(`${API_URL}profile`, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("user")}`,
-    },
-  });
+  const response = await api.get(`${API_BASE}/profile`);
   return response.data;
 };
 
 const updateUserProfile = async (userData) => {
-  const response = await axios.put(`${API_URL}profile`, userData, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("user")}`,
-    },
-  });
+  const response = await api.put(`${API_BASE}/profile`, userData);
+  return response.data;
+};
+
+const getTransactionHistory = async (params) => {
+  const response = await api.get(`${API_BASE}/transactions`, { params });
   return response.data;
 };
 
 const UserService = {
   getUserProfile,
   updateUserProfile,
+  getTransactionHistory,
 };
 
 export default UserService;

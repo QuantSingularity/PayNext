@@ -14,7 +14,7 @@ Unified service combining:
 import logging
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 import cache
@@ -217,7 +217,7 @@ def _get_profile_dict(user_id: str, db: Session) -> Optional[Dict]:
 def _velocity_score(user_id: str, req: Dict, db: Session) -> float:
     """High transaction frequency or spend rate compared to the user baseline."""
     try:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         one_hour_ago = now - timedelta(hours=1)
         one_day_ago = now - timedelta(days=1)
 
@@ -555,7 +555,7 @@ def analyze_transaction(req: Dict[str, Any], db: Session) -> TransactionAnalysis
             "fraud_status": analysis.fraud_status.value,
             "fraud_indicators": analysis.fraud_indicators,
             "analysis_duration_ms": analysis.analysis_duration_ms,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
         }
     )
 
@@ -597,7 +597,7 @@ def get_realtime_score(req: Dict[str, Any], db: Session) -> Dict[str, Any]:
         "fraud_score": round(score, 4),
         "risk_level": level.value,
         "ml_score": ml["combined"],
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
     }
 
 
@@ -608,7 +608,7 @@ def get_user_behavior_profile(
 
 
 def get_fraud_stats(db: Session) -> Dict[str, Any]:
-    cutoff = datetime.utcnow() - timedelta(days=1)
+    cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=1)
     total = (
         db.query(TransactionAnalysis)
         .filter(TransactionAnalysis.created_at >= cutoff)
@@ -668,7 +668,7 @@ def mark_transaction_fraud(
         FraudStatus.DECLINED if is_fraud else FraudStatus.FALSE_POSITIVE
     )
     analysis.reviewed_by = reviewed_by
-    analysis.reviewed_at = datetime.utcnow()
+    analysis.reviewed_at = datetime.now(timezone.utc).replace(tzinfo=None)
     analysis.review_notes = notes
     db.commit()
     db.refresh(analysis)

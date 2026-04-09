@@ -2,6 +2,7 @@ package com.fintech.paymentservice.model;
 
 public class NotificationRequest {
   private String recipient;
+  private String recipientEmail;
   private String message;
   private String subject;
 
@@ -9,6 +10,7 @@ public class NotificationRequest {
 
   public NotificationRequest(String recipient, String message) {
     this.recipient = recipient;
+    this.recipientEmail = recipient;
     this.message = message;
   }
 
@@ -18,6 +20,14 @@ public class NotificationRequest {
 
   public void setRecipient(String recipient) {
     this.recipient = recipient;
+  }
+
+  public String getRecipientEmail() {
+    return recipientEmail;
+  }
+
+  public void setRecipientEmail(String recipientEmail) {
+    this.recipientEmail = recipientEmail;
   }
 
   public String getMessage() {
@@ -41,6 +51,9 @@ public class NotificationRequest {
     return "NotificationRequest{"
         + "recipient='"
         + recipient
+        + '\''
+        + ", recipientEmail='"
+        + recipientEmail
         + '\''
         + ", message='"
         + message

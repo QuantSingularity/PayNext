@@ -7,6 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -34,10 +37,18 @@ public class EurekaServerApplicationTests {
 
   @Test
   void eurekaAppsEndpointShouldBeAvailable() {
-    ResponseEntity<String> response =
-        restTemplate.getForEntity("http://localhost:" + port + "/eureka/apps", String.class);
+    HttpHeaders headers = new HttpHeaders();
+    headers.set(HttpHeaders.ACCEPT, "application/json");
+    HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-    // Eureka apps endpoint returns 200 with an XML/JSON body listing registered apps
+    ResponseEntity<String> response =
+        restTemplate.exchange(
+            "http://localhost:" + port + "/eureka/apps",
+            HttpMethod.GET,
+            entity,
+            String.class);
+
+    // Eureka apps endpoint returns 200 with registered apps list
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(response.getBody());
   }

@@ -39,7 +39,9 @@ def generate_churn_data(num_users: int = 1000, num_months: int = 12) -> pd.DataF
         # Determine churn month (-1 = no churn)
         churn_month = -1
         if np.random.rand() < 0.15:  # 15% churn probability
-            churn_month = np.random.randint(3, num_months - 1)
+            churn_low = min(3, max(1, num_months // 3))
+            churn_high = max(churn_low + 1, num_months - 1)
+            churn_month = np.random.randint(churn_low, churn_high)
 
         for month_offset in range(num_months):
             current_month = start_date + timedelta(days=30 * month_offset)

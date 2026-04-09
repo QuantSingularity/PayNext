@@ -13,7 +13,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-model_dir = os.path.join(os.path.dirname(__file__), "..")
+model_dir = os.path.dirname(__file__)
 
 category_model = None
 category_vectorizer = None

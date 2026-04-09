@@ -14,7 +14,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-model_dir = os.path.join(os.path.dirname(__file__), "..")
+model_dir = os.path.dirname(__file__)
 
 credit_scoring_model = None
 credit_scoring_scaler = None

@@ -20,7 +20,7 @@ NUM_CLUSTERS = 7
 def train_recommendation_model() -> Any:
     base_dir = os.path.dirname(__file__)
     data_path = os.path.join(base_dir, "..", "ml-common", "synthetic_transactions.csv")
-    model_dir = os.path.join(base_dir, "..")
+    model_dir = base_dir
     df_transactions = pd.read_csv(data_path)
     if "transaction_time" in df_transactions.columns:
         df_transactions["transaction_time"] = pd.to_datetime(

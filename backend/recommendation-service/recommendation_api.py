@@ -15,7 +15,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-model_dir = os.path.join(os.path.dirname(__file__), "..")
+model_dir = os.path.dirname(__file__)
 
 kmeans_model = None
 scaler = None

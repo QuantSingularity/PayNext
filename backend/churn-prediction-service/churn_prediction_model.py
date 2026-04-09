@@ -111,7 +111,7 @@ def train_churn_model(
     y = user_agg["ever_churned"]
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
-    model_dir = os.path.join(os.path.dirname(__file__), "..")
+    model_dir = os.path.dirname(__file__)
     joblib.dump(scaler, os.path.join(model_dir, "churn_scaler.joblib"))
     X_train, X_test, y_train, y_test = train_test_split(
         X_scaled, y, test_size=0.3, random_state=42, stratify=y

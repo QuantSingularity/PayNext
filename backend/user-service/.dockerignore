@@ -1,5 +1,0 @@
-**/*.log
-**/*.md
-.git
-.gitignore
-src/test

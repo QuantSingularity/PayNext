@@ -25,6 +25,7 @@ import { authService } from "../services/api";
 const Register = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState({
+    username: "",
     firstName: "",
     lastName: "",
     email: "",
@@ -59,7 +60,7 @@ const Register = () => {
 
   const validateStep = () => {
     if (activeStep === 0) {
-      if (!formData.email || !formData.password || !formData.confirmPassword) {
+      if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
         setError("Please fill in all required fields");
         return false;
       }
@@ -108,6 +109,7 @@ const Register = () => {
 
     try {
       await authService.register({
+        username: formData.username,
         email: formData.email,
         password: formData.password,
         firstName: formData.firstName,
@@ -116,9 +118,10 @@ const Register = () => {
       });
       navigate("/login");
     } catch (err) {
-      const errorMessage = err.response?.data?.message
-        ? err.response.data.message
-        : "Registration failed. Please try again.";
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Registration failed. Please try again.";
       setError(errorMessage);
       console.error("Registration error:", err);
     } finally {
@@ -135,11 +138,24 @@ const Register = () => {
               margin="normal"
               required
               fullWidth
+              id="username"
+              label="Username"
+              name="username"
+              autoComplete="username"
+              autoFocus
+              value={formData.username}
+              onChange={handleChange}
+              variant="outlined"
+              disabled={loading}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
               id="email"
               label="Email Address"
               name="email"
               autoComplete="email"
-              autoFocus
               value={formData.email}
               onChange={handleChange}
               variant="outlined"
@@ -255,6 +271,12 @@ const Register = () => {
               <Grid container spacing={2}>
                 <Grid item xs={6}>
                   <Typography variant="body2" color="text.secondary">
+                    Username
+                  </Typography>
+                  <Typography variant="body1">{formData.username}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary">
                     Email
                   </Typography>
                   <Typography variant="body1">{formData.email}</Typography>
@@ -268,7 +290,7 @@ const Register = () => {
                   </Typography>
                 </Grid>
                 {formData.phone && (
-                  <Grid item xs={12}>
+                  <Grid item xs={6}>
                     <Typography variant="body2" color="text.secondary">
                       Phone
                     </Typography>

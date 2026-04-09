@@ -51,6 +51,12 @@ public class JwtAuthenticationFilter implements WebFilter {
         return exchange.getResponse().setComplete();
       }
 
+      // FIXED: validate token signature and expiry before trusting the username
+      if (!jwtUtil.validateToken(token, username)) {
+        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+        return exchange.getResponse().setComplete();
+      }
+
       UsernamePasswordAuthenticationToken authentication =
           new UsernamePasswordAuthenticationToken(username, null, new ArrayList<>());
 

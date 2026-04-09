@@ -62,7 +62,7 @@ def train_credit_scoring_model(
     y = user_features["credit_risk"]
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
-    model_dir = os.path.join(os.path.dirname(__file__), "..")
+    model_dir = os.path.dirname(__file__)
     joblib.dump(scaler, os.path.join(model_dir, "credit_scoring_scaler.joblib"))
     X = pd.DataFrame(X_scaled, columns=feature_cols)
     X_train, X_test, y_train, y_test = train_test_split(

@@ -23,7 +23,7 @@ POST /api/fraud-detection/retrain             Trigger ML model retraining
 import logging
 import os
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 import fraud_detection_service as svc
@@ -210,7 +210,7 @@ async def health_check():
         "status": "UP",
         "service": "fraud-detection-service",
         "models_loaded": svc._models_loaded,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
     }
 
 

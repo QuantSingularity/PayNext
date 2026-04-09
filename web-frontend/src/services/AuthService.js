@@ -1,27 +1,43 @@
-import axios from "axios";
+import api from "./api";
 
-// Use environment variable or default to localhost API gateway
-const API_URL =
-  process.env.REACT_APP_API_BASE_URL || "http://localhost:8002/auth/";
+const API_BASE = "/users";
 
-const login = async (email, password) => {
-  const response = await axios.post(`${API_URL}login`, { email, password });
-  localStorage.setItem("user", JSON.stringify(response.data));
+const login = async (username, password) => {
+  const response = await api.post(`${API_BASE}/login`, { username, password });
+  if (response.data && response.data.token) {
+    localStorage.setItem("token", response.data.token);
+    localStorage.setItem("isAuthenticated", "true");
+    localStorage.setItem("user", JSON.stringify(response.data));
+  }
   return response.data;
 };
 
-const register = async (email, password) => {
-  const response = await axios.post(`${API_URL}register`, { email, password });
-  localStorage.setItem("user", JSON.stringify(response.data));
+const register = async (username, email, password, extraData = {}) => {
+  const response = await api.post(`${API_BASE}/register`, {
+    username,
+    email,
+    password,
+    ...extraData,
+  });
   return response.data;
 };
 
 const logout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("isAuthenticated");
   localStorage.removeItem("user");
 };
 
 const getCurrentUser = () => {
-  return JSON.parse(localStorage.getItem("user"));
+  try {
+    return JSON.parse(localStorage.getItem("user"));
+  } catch {
+    return null;
+  }
+};
+
+const isAuthenticated = () => {
+  return localStorage.getItem("isAuthenticated") === "true" && !!localStorage.getItem("token");
 };
 
 const AuthService = {
@@ -29,6 +45,7 @@ const AuthService = {
   register,
   logout,
   getCurrentUser,
+  isAuthenticated,
 };
 
 export default AuthService;
