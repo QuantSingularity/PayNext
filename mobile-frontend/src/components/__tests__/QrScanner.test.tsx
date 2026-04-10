@@ -1,12 +1,15 @@
 import { render, waitFor } from "@testing-library/react";
 import QrScanner from "@/components/QrScanner";
 
-// Mock html5-qrcode
+const mockRender = jest.fn();
+const mockClear = jest.fn().mockResolvedValue(undefined);
+const MockHtml5QrcodeScanner = jest.fn().mockImplementation(() => ({
+  render: mockRender,
+  clear: mockClear,
+}));
+
 jest.mock("html5-qrcode", () => ({
-  Html5QrcodeScanner: jest.fn().mockImplementation(() => ({
-    render: jest.fn(),
-    clear: jest.fn().mockResolvedValue(undefined),
-  })),
+  Html5QrcodeScanner: MockHtml5QrcodeScanner,
   Html5QrcodeScanType: {
     SCAN_TYPE_CAMERA: "camera",
     SCAN_TYPE_FILE: "file",
@@ -21,50 +24,92 @@ describe("QrScanner Component", () => {
     jest.clearAllMocks();
   });
 
-  it("renders the QR scanner container", () => {
+  it("renders the scanner container div with correct id", () => {
     const { container } = render(
       <QrScanner
         onScanSuccess={mockOnScanSuccess}
         onScanFailure={mockOnScanFailure}
       />,
     );
-
-    const scannerDiv = container.querySelector("#html5qr-code-full-region");
-    expect(scannerDiv).toBeInTheDocument();
+    expect(
+      container.querySelector("#html5qr-code-full-region"),
+    ).toBeInTheDocument();
   });
 
-  it("initializes scanner on mount", async () => {
+  it("initializes Html5QrcodeScanner on mount", async () => {
     render(
       <QrScanner
         onScanSuccess={mockOnScanSuccess}
         onScanFailure={mockOnScanFailure}
       />,
     );
-
     await waitFor(() => {
-      const { Html5QrcodeScanner } = require("html5-qrcode");
-      expect(Html5QrcodeScanner).toHaveBeenCalled();
+      expect(MockHtml5QrcodeScanner).toHaveBeenCalledTimes(1);
     });
   });
 
-  it("renders with correct div id for scanner initialization", () => {
-    const { container } = render(
+  it("calls scanner.render with callbacks", async () => {
+    render(
       <QrScanner
         onScanSuccess={mockOnScanSuccess}
         onScanFailure={mockOnScanFailure}
       />,
     );
-
-    expect(container.querySelector("#html5qr-code-full-region")).toBeTruthy();
+    await waitFor(() => {
+      expect(mockRender).toHaveBeenCalledWith(
+        expect.any(Function),
+        expect.any(Function),
+      );
+    });
   });
 
-  it("accepts optional onScanFailure prop", () => {
+  it("calls scanner.clear on unmount", async () => {
+    const { unmount } = render(
+      <QrScanner
+        onScanSuccess={mockOnScanSuccess}
+        onScanFailure={mockOnScanFailure}
+      />,
+    );
+    await waitFor(() => expect(MockHtml5QrcodeScanner).toHaveBeenCalled());
+    unmount();
+    await waitFor(() => {
+      expect(mockClear).toHaveBeenCalled();
+    });
+  });
+
+  it("works without optional onScanFailure prop", () => {
     const { container } = render(
       <QrScanner onScanSuccess={mockOnScanSuccess} />,
     );
-
     expect(
       container.querySelector("#html5qr-code-full-region"),
     ).toBeInTheDocument();
+  });
+
+  it("does not re-initialize scanner when props update", async () => {
+    const { rerender } = render(
+      <QrScanner onScanSuccess={mockOnScanSuccess} />,
+    );
+    await waitFor(() =>
+      expect(MockHtml5QrcodeScanner).toHaveBeenCalledTimes(1),
+    );
+
+    rerender(<QrScanner onScanSuccess={jest.fn()} />);
+    await waitFor(() => {
+      expect(MockHtml5QrcodeScanner).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("initializes scanner with camera scan type", async () => {
+    render(<QrScanner onScanSuccess={mockOnScanSuccess} />);
+    await waitFor(() => {
+      expect(MockHtml5QrcodeScanner).toHaveBeenCalledWith(
+        "html5qr-code-full-region",
+        expect.objectContaining({
+          supportedScanTypes: ["camera"],
+        }),
+        false,
+      );
+    });
   });
 });

@@ -1,137 +1,120 @@
 /**
  * Integration tests for PayNext Mobile Frontend
- * Tests core user flows and component interactions
  */
 
 import { mockApiClient } from "@/lib/api-client";
 
-// Mock next/navigation
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: jest.fn(),
-    replace: jest.fn(),
-  }),
-  useSearchParams: () => ({
-    get: jest.fn(),
-  }),
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
+  useSearchParams: () => ({ get: jest.fn() }),
   usePathname: () => "/",
 }));
 
 describe("PayNext Integration Tests", () => {
-  describe("API Client", () => {
-    it("fetches balance successfully", async () => {
+  describe("API Client - mockApiClient", () => {
+    it("fetches balance with required fields", async () => {
       const response = await mockApiClient.getBalance();
-
       expect(response.success).toBe(true);
       expect(response.data).toHaveProperty("balance");
-      expect(response.data).toHaveProperty("currency");
+      expect(response.data).toHaveProperty("currency", "USD");
+      expect(typeof (response.data as { balance: number }).balance).toBe(
+        "number",
+      );
     });
 
-    it("fetches transactions successfully", async () => {
-      const response = await mockApiClient.getTransactions(5);
-
+    it("fetches up to N transactions and respects limit", async () => {
+      const response = await mockApiClient.getTransactions(2);
       expect(response.success).toBe(true);
       expect(Array.isArray(response.data)).toBe(true);
-      expect(response.data?.length).toBeLessThanOrEqual(5);
+      expect((response.data as unknown[]).length).toBeLessThanOrEqual(2);
     });
 
-    it("sends payment successfully", async () => {
-      const paymentData = {
-        recipient: "john_doe",
-        amount: 100.0,
-        memo: "Test payment",
-      };
-
-      const response = await mockApiClient.sendPayment(paymentData);
-
-      if (response.success) {
-        expect(response.data).toHaveProperty("transactionId");
-        expect(response.data).toMatchObject(paymentData);
-      }
-    });
-
-    it("creates payment request successfully", async () => {
-      const requestData = {
-        amount: 50.0,
-        memo: "Payment request test",
-      };
-
-      const response = await mockApiClient.requestPayment(requestData);
-
-      expect(response.success).toBe(true);
-      if (response.success && response.data) {
-        expect(response.data).toHaveProperty("requestId");
-        expect(response.data).toHaveProperty("qrCode");
-      }
-    });
-
-    it("fetches user profile successfully", async () => {
-      const response = await mockApiClient.getUserProfile();
-
-      expect(response.success).toBe(true);
-      if (response.success && response.data) {
-        expect(response.data).toHaveProperty("id");
-        expect(response.data).toHaveProperty("name");
-        expect(response.data).toHaveProperty("email");
-      }
-    });
-
-    it("updates user profile successfully", async () => {
-      const updateData = {
-        name: "Updated Name",
-        email: "updated@example.com",
-      };
-
-      const response = await mockApiClient.updateUserProfile(updateData);
-
-      if (response.success) {
-        expect(response.data).toMatchObject(updateData);
-      }
-    });
-  });
-
-  describe("Data Flow", () => {
-    it("transaction data includes all required fields", async () => {
+    it("transaction objects include all required fields", async () => {
       const response = await mockApiClient.getTransactions(1);
-
-      if (response.success && response.data && response.data.length > 0) {
-        const transaction = response.data[0];
-        expect(transaction).toHaveProperty("id");
-        expect(transaction).toHaveProperty("type");
-        expect(transaction).toHaveProperty("description");
-        expect(transaction).toHaveProperty("date");
-        expect(transaction).toHaveProperty("amount");
-        expect(transaction).toHaveProperty("currency");
-      }
+      const tx = (response.data as Array<Record<string, unknown>>)[0];
+      expect(tx).toHaveProperty("id");
+      expect(tx).toHaveProperty("type");
+      expect(tx).toHaveProperty("description");
+      expect(tx).toHaveProperty("date");
+      expect(tx).toHaveProperty("amount");
+      expect(tx).toHaveProperty("currency");
     });
 
-    it("balance data has correct structure", async () => {
-      const response = await mockApiClient.getBalance();
+    it("sends payment and returns transactionId on success", async () => {
+      const spy = jest.spyOn(Math, "random").mockReturnValue(0.9);
+      const response = await mockApiClient.sendPayment({
+        recipient: "alice",
+        amount: 100,
+        memo: "test",
+      });
+      expect(response.success).toBe(true);
+      expect(
+        (response.data as { transactionId: string }).transactionId,
+      ).toMatch(/^txn_/);
+      spy.mockRestore();
+    });
 
-      if (response.success && response.data) {
-        expect(typeof response.data.balance).toBe("number");
-        expect(typeof response.data.currency).toBe("string");
-      }
+    it("creates payment request with requestId and qrCode", async () => {
+      const response = await mockApiClient.requestPayment({
+        amount: 50,
+        memo: "dinner",
+      });
+      expect(response.success).toBe(true);
+      const data = response.data as { requestId: string; qrCode: string };
+      expect(data.requestId).toMatch(/^req_/);
+      expect(data.qrCode).toContain("paynext://");
+    });
+
+    it("fetches user profile with full user shape", async () => {
+      const response = await mockApiClient.getUserProfile();
+      expect(response.success).toBe(true);
+      const user = response.data as { id: string; name: string; email: string };
+      expect(user.id).toBeDefined();
+      expect(user.name).toBeDefined();
+      expect(user.email).toBeDefined();
+    });
+
+    it("updateUserProfile returns success", async () => {
+      const spy = jest.spyOn(Math, "random").mockReturnValue(0.9);
+      const response = await mockApiClient.updateUserProfile({
+        name: "New",
+        email: "n@x.com",
+      });
+      expect(response.success).toBe(true);
+      spy.mockRestore();
     });
   });
 
   describe("Error Handling", () => {
-    it("handles payment failures gracefully", async () => {
-      // The mock has a 20% failure rate
-      const results = await Promise.all(
-        Array(10)
-          .fill(null)
-          .map(() =>
-            mockApiClient.sendPayment({
-              recipient: "test",
-              amount: 10,
-            }),
-          ),
-      );
+    it("sendPayment can fail with correct error shape", async () => {
+      const spy = jest.spyOn(Math, "random").mockReturnValue(0.0);
+      const response = await mockApiClient.sendPayment({
+        recipient: "x",
+        amount: 1,
+      });
+      expect(response.success).toBe(false);
+      expect(response.error).toHaveProperty("message");
+      expect(response.error).toHaveProperty("status");
+      spy.mockRestore();
+    });
 
-      const failures = results.filter((r) => !r.success);
-      // At least some should fail with the mock's logic
-      expect(failures.length).toBeGreaterThanOrEqual(0);
+    it("updateUserProfile can fail with error shape", async () => {
+      const spy = jest.spyOn(Math, "random").mockReturnValue(0.0);
+      const response = await mockApiClient.updateUserProfile({ name: "x" });
+      expect(response.success).toBe(false);
+      expect(response.error).toHaveProperty("message");
+      spy.mockRestore();
+    });
+  });
+
+  describe("QR code data format", () => {
+    it("requestPayment qrCode is a valid paynext:// URL", async () => {
+      const response = await mockApiClient.requestPayment({
+        amount: 25,
+        memo: "split",
+      });
+      const qrCode = (response.data as { qrCode: string }).qrCode;
+      expect(() => new URL(qrCode)).not.toThrow();
     });
   });
 });

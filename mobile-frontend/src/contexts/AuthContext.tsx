@@ -1,7 +1,13 @@
 "use client";
 
 import type React from "react";
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import { apiClient, mockApiClient, useMockData } from "@/lib/api-client";
 
@@ -29,8 +35,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const client = useMockData ? mockApiClient : apiClient;
+      const response = await client.getUserProfile();
+      if (response.success && response.data) {
+        setUser(response.data as User);
+      }
+    } catch (error) {
+      console.error("Failed to refresh user:", error);
+    }
+  }, []);
+
   useEffect(() => {
-    // Check for existing session on mount
     const initAuth = async () => {
       const token = localStorage.getItem("auth_token");
       if (token) {
@@ -41,21 +58,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth();
   }, [refreshUser]);
 
-  const refreshUser = async () => {
-    try {
-      const client = useMockData ? mockApiClient : apiClient;
-      const response = await client.getUserProfile();
-      if (response.success && response.data) {
-        setUser(response.data as User);
-      }
-    } catch (error) {
-      console.error("Failed to refresh user:", error);
-    }
-  };
-
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      // In development, auto-succeed with mock data
       if (useMockData) {
         const mockToken = `mock_jwt_token_${Date.now()}`;
         apiClient.setToken(mockToken);
@@ -68,7 +72,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         const response = await apiClient.login(email, password);
         if (response.success && response.data) {
-          const { token, user: userData } = response.data as any;
+          const { token, user: userData } = response.data as {
+            token: string;
+            user: User;
+          };
           apiClient.setToken(token);
           setUser(userData);
           toast.success("Logged in successfully!");

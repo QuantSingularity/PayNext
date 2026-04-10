@@ -6,11 +6,11 @@ import {
   type QrcodeErrorCallback,
   type QrcodeSuccessCallback,
 } from "html5-qrcode";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 
 interface QrScannerProps {
-  onScanSuccess: (decodedText: string, decodedResult: any) => void;
-  onScanFailure?: (error: any) => void;
+  onScanSuccess: (decodedText: string, decodedResult: unknown) => void;
+  onScanFailure?: (error: unknown) => void;
 }
 
 const QrScanner: React.FC<QrScannerProps> = ({
@@ -18,84 +18,67 @@ const QrScanner: React.FC<QrScannerProps> = ({
   onScanFailure,
 }) => {
   const scannerRef = useRef<Html5QrcodeScanner | null>(null);
-  const [scanResult, setScanResult] = useState<string | null>(null);
+  const hasScannedRef = useRef<boolean>(false);
   const qrcodeRegionId = "html5qr-code-full-region";
 
   useEffect(() => {
-    // Ensure this runs only on the client
-    if (typeof window !== "undefined") {
-      const verbose = false; // Set to true for debugging
+    if (typeof window === "undefined") return;
 
-      // Define callbacks
-      const qrCodeSuccessCallback: QrcodeSuccessCallback = (
-        decodedText,
-        decodedResult,
-      ) => {
-        if (decodedText !== scanResult) {
-          // Prevent multiple calls for the same scan
-          setScanResult(decodedText);
-          if (scannerRef.current) {
-            // Optionally stop scanning after success
-            // scannerRef.current.clear().catch(error => {
-            //   console.error("Failed to clear html5-qrcode scanner.", error);
-            // });
-          }
-          onScanSuccess(decodedText, decodedResult);
-        }
-      };
+    const verbose = false;
 
-      const qrCodeErrorCallback: QrcodeErrorCallback = (errorMessage) => {
-        // Handle scan errors, e.g., QR code not found
-        // console.warn(`QR Code scan error: ${errorMessage}`);
-        if (onScanFailure) {
-          onScanFailure(errorMessage);
-        }
-      };
-
-      // Create scanner instance if it doesn't exist
-      if (!scannerRef.current) {
-        const html5QrcodeScanner = new Html5QrcodeScanner(
-          qrcodeRegionId,
-          {
-            fps: 10,
-            qrbox: (viewfinderWidth, viewfinderHeight) => {
-              const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-              const qrboxSize = Math.floor(minEdge * 0.7); // Use 70% of the smaller edge
-              return {
-                width: qrboxSize,
-                height: qrboxSize,
-              };
-            },
-            rememberLastUsedCamera: true,
-            supportedScanTypes: [
-              Html5QrcodeScanType.SCAN_TYPE_CAMERA,
-              // Html5QrcodeScanType.SCAN_TYPE_FILE // Optionally add file scanning
-            ],
-          },
-          verbose,
-        );
-
-        // Start scanning
-        html5QrcodeScanner.render(qrCodeSuccessCallback, qrCodeErrorCallback);
-        scannerRef.current = html5QrcodeScanner;
+    const qrCodeSuccessCallback: QrcodeSuccessCallback = (
+      decodedText,
+      decodedResult,
+    ) => {
+      if (!hasScannedRef.current) {
+        hasScannedRef.current = true;
+        onScanSuccess(decodedText, decodedResult);
       }
+    };
 
-      // Cleanup function to clear the scanner on component unmount
-      return () => {
-        if (scannerRef.current) {
-          scannerRef.current.clear().catch((error) => {
-            console.error(
-              "Failed to clear html5-qrcode scanner on unmount.",
-              error,
-            );
-          });
-          scannerRef.current = null;
-        }
-      };
+    const qrCodeErrorCallback: QrcodeErrorCallback = (errorMessage) => {
+      if (onScanFailure) {
+        onScanFailure(errorMessage);
+      }
+    };
+
+    if (!scannerRef.current) {
+      const html5QrcodeScanner = new Html5QrcodeScanner(
+        qrcodeRegionId,
+        {
+          fps: 10,
+          qrbox: (viewfinderWidth, viewfinderHeight) => {
+            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+            const qrboxSize = Math.floor(minEdge * 0.7);
+            return {
+              width: qrboxSize,
+              height: qrboxSize,
+            };
+          },
+          rememberLastUsedCamera: true,
+          supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+        },
+        verbose,
+      );
+
+      html5QrcodeScanner.render(qrCodeSuccessCallback, qrCodeErrorCallback);
+      scannerRef.current = html5QrcodeScanner;
     }
-  }, [onScanSuccess, onScanFailure, scanResult]); // Add dependencies
 
-  return <div id={qrcodeRegionId} className="w-full"></div>;
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch((error) => {
+          console.error(
+            "Failed to clear html5-qrcode scanner on unmount.",
+            error,
+          );
+        });
+        scannerRef.current = null;
+      }
+    };
+  }, [onScanSuccess, onScanFailure]);
+
+  return <div id={qrcodeRegionId} className="w-full" />;
 };
 
 export default QrScanner;

@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next"; // Import Viewport type
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
@@ -7,18 +7,25 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
-// Separate Metadata and Viewport exports
 export const metadata: Metadata = {
   title: "PayNext Mobile",
-  description: "Modern mobile frontend for PayNext",
+  description: "Modern mobile payment wallet — send, receive, and manage money",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "PayNext",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -27,8 +34,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} bg-background text-foreground`}>
+    <html lang="en" suppressHydrationWarning className={inter.variable}>
+      <body className="bg-background text-foreground font-sans antialiased">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -38,11 +45,11 @@ export default function RootLayout({
           <AuthProvider>
             <ErrorBoundary>
               <div className="min-h-screen flex flex-col">
-                <main className="flex-grow container mx-auto p-4 pb-20">
+                <main className="flex-grow container mx-auto max-w-md px-4 pt-4 pb-24">
                   {children}
                 </main>
                 <BottomNav />
-                <Toaster />
+                <Toaster position="top-center" richColors />
               </div>
             </ErrorBoundary>
           </AuthProvider>
