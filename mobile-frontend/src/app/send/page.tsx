@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, Loader2, Send, UserCircle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -32,7 +32,8 @@ const formSchema = z.object({
   memo: z.string().optional(),
 });
 
-export default function SendPage() {
+// 1. Move the logic into a separate component
+function SendPageContent() {
   const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastTransactionId, setLastTransactionId] = useState<string | null>(
@@ -229,5 +230,19 @@ export default function SendPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function SendPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        </div>
+      }
+    >
+      <SendPageContent />
+    </Suspense>
   );
 }
