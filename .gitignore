@@ -207,3 +207,9 @@ target/
 # Machine Learning Artifacts
 *.joblib
 *.csv
+
+# Next.js build output
+.next/
+
+# Environment variables
+.env*.local
