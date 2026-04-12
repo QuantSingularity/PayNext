@@ -1,0 +1,411 @@
+version: "3.8"
+
+# =============================================================================
+# PayNext — Unified Backend
+# Java services  : 8001–8005  (code/backend/)
+# Python ML services : 9001–9007  (code/ml-services/)
+# =============================================================================
+
+services:
+  # ─── Infrastructure ────────────────────────────────────────────────────────
+
+  mysql:
+    image: mysql:8.0
+    container_name: paynext-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-changeme}
+      MYSQL_USER: paynext
+      MYSQL_PASSWORD: ${DB_PASSWORD:-changeme}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-changeme}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - paynext-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: paynext-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paynext-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: paynext-zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo ruok | nc localhost 2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - paynext-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: paynext-kafka
+    restart: unless-stopped
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+    networks:
+      - paynext-network
+
+  # ─── Java Microservices (backend/) ─────────────────────────────────────────
+
+  eureka-server:
+    build:
+      context: ./backend
+      dockerfile: eureka-server/Dockerfile
+    container_name: paynext-eureka-server
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: 8001
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8001/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - paynext-network
+
+  api-gateway:
+    build:
+      context: ./backend
+      dockerfile: api-gateway/Dockerfile
+    container_name: paynext-api-gateway
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: 8002
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8001/eureka/
+      JWT_SECRET: ${JWT_SECRET:-defaultSecretKeyForDevelopmentOnlyNotForProduction123456789}
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8002/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    networks:
+      - paynext-network
+
+  user-service:
+    build:
+      context: ./backend
+      dockerfile: user-service/Dockerfile
+    container_name: paynext-user-service
+    restart: unless-stopped
+    ports:
+      - "8003:8003"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: 8003
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8001/eureka/
+      JWT_SECRET: ${JWT_SECRET:-defaultSecretKeyForDevelopmentOnlyNotForProduction123456789}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/user_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: paynext
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-changeme}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-placeholder}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-placeholder}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-placeholder}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-placeholder}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER:-+1234567890}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8003/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+    networks:
+      - paynext-network
+
+  payment-service:
+    build:
+      context: ./backend
+      dockerfile: payment-service/Dockerfile
+    container_name: paynext-payment-service
+    restart: unless-stopped
+    ports:
+      - "8004:8004"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: 8004
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8001/eureka/
+      JWT_SECRET: ${JWT_SECRET:-defaultSecretKeyForDevelopmentOnlyNotForProduction123456789}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/payment_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: paynext
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-changeme}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8004/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+    networks:
+      - paynext-network
+
+  notification-service:
+    build:
+      context: ./backend
+      dockerfile: notification-service/Dockerfile
+    container_name: paynext-notification-service
+    restart: unless-stopped
+    ports:
+      - "8005:8005"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: 8005
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8001/eureka/
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-placeholder}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-placeholder}
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8005/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    networks:
+      - paynext-network
+
+  # ─── Python ML Services (ml-services/) ────────────────────────────────────
+
+  fraud-detection-service:
+    build:
+      context: ./ml-services
+      dockerfile: fraud-detection-service/Dockerfile
+    container_name: paynext-fraud-detection-service
+    restart: unless-stopped
+    ports:
+      - "9001:9001"
+    environment:
+      DB_URL: mysql+pymysql://paynext:${DB_PASSWORD:-changeme}@mysql:3306/fraud_db?charset=utf8mb4
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      FRAUD_THRESHOLD_HIGH: ${FRAUD_THRESHOLD_HIGH:-0.6}
+      FRAUD_THRESHOLD_CRITICAL: ${FRAUD_THRESHOLD_CRITICAL:-0.8}
+      PORT: 9001
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    volumes:
+      - ml-models:/app/fraud-detection-service/models
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - paynext-network
+
+  anomaly-detection-service:
+    build:
+      context: ./ml-services
+      dockerfile: anomaly-detection-service/Dockerfile
+    container_name: paynext-anomaly-detection-service
+    restart: unless-stopped
+    ports:
+      - "9002:9002"
+    volumes:
+      - ml-models:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - paynext-network
+
+  churn-prediction-service:
+    build:
+      context: ./ml-services
+      dockerfile: churn-prediction-service/Dockerfile
+    container_name: paynext-churn-prediction-service
+    restart: unless-stopped
+    ports:
+      - "9003:9003"
+    volumes:
+      - ml-models:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - paynext-network
+
+  recommendation-service:
+    build:
+      context: ./ml-services
+      dockerfile: recommendation-service/Dockerfile
+    container_name: paynext-recommendation-service
+    restart: unless-stopped
+    ports:
+      - "9004:9004"
+    volumes:
+      - ml-models:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - paynext-network
+
+  categorization-service:
+    build:
+      context: ./ml-services
+      dockerfile: categorization-service/Dockerfile
+    container_name: paynext-categorization-service
+    restart: unless-stopped
+    ports:
+      - "9005:9005"
+    volumes:
+      - ml-models:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - paynext-network
+
+  credit-scoring-service:
+    build:
+      context: ./ml-services
+      dockerfile: credit-scoring-service/Dockerfile
+    container_name: paynext-credit-scoring-service
+    restart: unless-stopped
+    ports:
+      - "9006:9006"
+    volumes:
+      - ml-models:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - paynext-network
+
+  data-analytics-service:
+    build:
+      context: ./ml-services
+      dockerfile: data-analytics-service/Dockerfile
+    container_name: paynext-data-analytics-service
+    restart: unless-stopped
+    ports:
+      - "9007:9007"
+    volumes:
+      - ml-models:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9007/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - paynext-network
+
+volumes:
+  mysql-data:
+  redis-data:
+  zookeeper-data:
+  kafka-data:
+  ml-models:
+
+networks:
+  paynext-network:
+    driver: bridge
