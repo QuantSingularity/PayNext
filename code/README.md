@@ -30,43 +30,47 @@ code/
 ## Quick Start
 
 ### Prerequisites
+
 - Docker & Docker Compose
 - Java 17+ and Maven (for local builds only; Docker builds are self-contained)
 - Python 3.11+ (for local ML training only)
 
 ### 1. Train ML models (first run only)
+
 ```bash
 cd ml-services
 python train_all.py
 ```
 
 ### 2. Start everything
+
 ```bash
 # From code/
 docker-compose up --build -d
 ```
 
 Or use the helper script:
+
 ```bash
 ./run-all.sh
 ```
 
 ### 3. Service ports
 
-| Service                    | Port |
-|----------------------------|------|
-| Eureka Server              | 8001 |
-| API Gateway                | 8002 |
-| User Service               | 8003 |
-| Payment Service            | 8004 |
-| Notification Service       | 8005 |
-| Fraud Detection Service    | 9001 |
-| Anomaly Detection Service  | 9002 |
-| Churn Prediction Service   | 9003 |
-| Recommendation Service     | 9004 |
-| Categorization Service     | 9005 |
-| Credit Scoring Service     | 9006 |
-| Data Analytics Service     | 9007 |
+| Service                   | Port |
+| ------------------------- | ---- |
+| Eureka Server             | 8001 |
+| API Gateway               | 8002 |
+| User Service              | 8003 |
+| Payment Service           | 8004 |
+| Notification Service      | 8005 |
+| Fraud Detection Service   | 9001 |
+| Anomaly Detection Service | 9002 |
+| Churn Prediction Service  | 9003 |
+| Recommendation Service    | 9004 |
+| Categorization Service    | 9005 |
+| Credit Scoring Service    | 9006 |
+| Data Analytics Service    | 9007 |
 
 ## Environment Variables
 
@@ -86,12 +90,14 @@ FRAUD_THRESHOLD_CRITICAL=0.8
 ```
 
 ## Building Java services locally
+
 ```bash
 cd backend
 mvn clean package -DskipTests
 ```
 
 ## Running individual ML services locally
+
 ```bash
 cd ml-services/<service-name>
 pip install -r requirements.txt
