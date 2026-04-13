@@ -1,6 +1,7 @@
 package com.fintech.userservice.config;
 
 import com.fintech.userservice.filter.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +14,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -24,9 +26,24 @@ public class SecurityConfig {
   @Autowired private UserDetailsService userDetailsService;
   @Autowired private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+  /**
+   * Returns 401 Unauthorized for unauthenticated requests to protected endpoints.
+   * Without this, Spring Security defaults to 403 Forbidden.
+   */
+  @Bean
+  public AuthenticationEntryPoint restAuthenticationEntryPoint() {
+    return (request, response, authException) -> {
+      response.setContentType("application/json");
+      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+      response.getWriter().write("{\"error\":\"Unauthorized\"}");
+    };
+  }
+
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http.csrf(csrf -> csrf.disable())
+        .exceptionHandling(
+            ex -> ex.authenticationEntryPoint(restAuthenticationEntryPoint()))
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(

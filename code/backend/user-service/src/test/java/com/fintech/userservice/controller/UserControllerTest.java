@@ -60,11 +60,24 @@ class UserControllerTest {
   @MockBean private UserDetailsService userDetailsService;
 
   /**
-   * JwtAuthenticationFilter is a @Component — @WebMvcTest picks it up. We register a mock so
-   * Spring wires it into the filter chain, but the mock does nothing (no-op doFilter), which
-   * is exactly what we want for controller-layer tests.
+   * JwtAuthenticationFilter is a @Component picked up by @WebMvcTest. We register a mock but
+   * must configure it to call chain.doFilter() so requests actually reach the controller.
+   * Without this, the mock absorbs all requests and returns empty 200 responses.
    */
   @MockBean private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+  @BeforeEach
+  void setUpJwtFilter() throws Exception {
+    // Make the JWT filter a transparent pass-through — delegate to the next filter in chain
+    org.mockito.Mockito.doAnswer(
+            inv -> {
+              jakarta.servlet.FilterChain chain = inv.getArgument(2);
+              chain.doFilter(inv.getArgument(0), inv.getArgument(1));
+              return null;
+            })
+        .when(jwtAuthenticationFilter)
+        .doFilter(any(), any(), any());
+  }
 
   // ── AuditFilter dependencies ───────────────────────────────────────────────
   @MockBean private AuditService auditService;
