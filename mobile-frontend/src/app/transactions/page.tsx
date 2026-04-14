@@ -68,20 +68,26 @@ export default function TransactionsPage() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold tracking-tight">Transactions</h1>
+      {/* Page header — web style */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Transactions</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          Your complete payment history
+        </p>
+      </div>
 
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search transactions..."
-          className="pl-9 rounded-xl h-11 bg-muted/30 border-border/50"
+          className="pl-9 rounded-xl h-11 bg-muted/30 border-border/50 focus-visible:ring-[#1976d2]"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
 
-      {/* Transaction List */}
+      {/* Transaction List — web-style card */}
       <div className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
         {loading ? (
           <div className="divide-y divide-border/40">
@@ -111,9 +117,9 @@ export default function TransactionsPage() {
                   }`}
                 >
                   {tx.amount < 0 ? (
-                    <ArrowUpRight className="h-4.5 w-4.5 text-red-500 dark:text-red-400" />
+                    <ArrowUpRight className="h-4 w-4 text-red-500 dark:text-red-400" />
                   ) : (
-                    <ArrowDownLeft className="h-4.5 w-4.5 text-green-500 dark:text-green-400" />
+                    <ArrowDownLeft className="h-4 w-4 text-green-500 dark:text-green-400" />
                   )}
                 </div>
                 <div className="flex-grow min-w-0">

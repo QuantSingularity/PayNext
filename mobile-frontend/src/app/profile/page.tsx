@@ -52,19 +52,11 @@ export default function ProfilePage() {
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
-    defaultValues: {
-      name: user?.name || "",
-      email: user?.email || "",
-    },
+    defaultValues: { name: user?.name || "", email: user?.email || "" },
   });
 
   useEffect(() => {
-    if (user) {
-      form.reset({
-        name: user.name,
-        email: user.email,
-      });
-    }
+    if (user) form.reset({ name: user.name, email: user.email });
   }, [user, form]);
 
   async function onProfileSubmit(values: z.infer<typeof profileFormSchema>) {
@@ -74,7 +66,6 @@ export default function ProfilePage() {
         name: values.name,
         email: values.email,
       });
-
       if (success) {
         toast.success("Profile updated successfully!");
         setIsEditing(false);
@@ -89,30 +80,13 @@ export default function ProfilePage() {
     }
   }
 
-  const handleLogout = () => {
-    logout();
-  };
-
-  const handleSettings = () => {
-    toast.info("Settings page coming soon!");
-  };
-
-  const handleNotifications = () => {
-    toast.info("Notifications settings coming soon!");
-  };
-
-  const handleSecurity = () => {
-    toast.info("Security settings coming soon!");
-  };
-
-  const getInitials = (name: string) => {
-    return name
+  const getInitials = (name: string) =>
+    name
       .split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase()
       .slice(0, 2);
-  };
 
   if (isLoading || !user) {
     return (
@@ -120,22 +94,70 @@ export default function ProfilePage() {
         <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
         <Card className="rounded-2xl border-border/60">
           <CardContent className="flex items-center justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <Loader2
+              className="h-8 w-8 animate-spin"
+              style={{ color: "#1976d2" }}
+            />
           </CardContent>
         </Card>
       </div>
     );
   }
 
+  const menuItems = [
+    {
+      icon: <Bell className="h-4.5 w-4.5 text-orange-500" />,
+      bg: "bg-orange-50 dark:bg-orange-900/20",
+      label: "Notifications",
+      sub: "Manage your alerts",
+      onClick: () => toast.info("Notifications settings coming soon!"),
+    },
+    {
+      icon: <Shield className="h-4.5 w-4.5 text-[#1976d2]" />,
+      bg: "bg-blue-50 dark:bg-blue-900/20",
+      label: "Security",
+      sub: "Password & 2FA",
+      onClick: () => toast.info("Security settings coming soon!"),
+    },
+    {
+      icon: <SettingsIcon className="h-4.5 w-4.5 text-slate-500" />,
+      bg: "bg-slate-100 dark:bg-slate-800/50",
+      label: "Preferences",
+      sub: "App settings & themes",
+      onClick: () => toast.info("Settings page coming soon!"),
+    },
+    {
+      icon: <User className="h-4.5 w-4.5 text-violet-500" />,
+      bg: "bg-violet-50 dark:bg-violet-900/20",
+      label: "Account Details",
+      sub: "Linked accounts & KYC",
+      onClick: () => {},
+    },
+  ];
+
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          Manage your account
+        </p>
+      </div>
 
-      {/* Profile Header Card */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-500 to-violet-600 p-6 text-white shadow-xl shadow-blue-500/20">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMDUiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-50" />
+      {/* Profile Header — web gradient style */}
+      <div
+        className="relative overflow-hidden rounded-2xl p-6 text-white"
+        style={{
+          background: "linear-gradient(135deg, #1976d2 0%, #1565c0 100%)",
+          boxShadow: "0 8px 32px rgba(25,118,210,0.3)",
+        }}
+      >
+        {/* Decorative circles */}
+        <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-44 h-44 rounded-full bg-white/5 pointer-events-none" />
+
         <div className="relative flex items-center gap-4">
-          <Avatar className="w-20 h-20 border-2 border-white/30 shadow-lg">
+          <Avatar className="w-20 h-20 border-2 border-white/30 shadow-lg flex-shrink-0">
             <AvatarImage src={user.avatarUrl} alt={user.name} />
             <AvatarFallback className="text-xl font-bold bg-white/20 text-white">
               {getInitials(user.name)}
@@ -224,7 +246,8 @@ export default function ProfilePage() {
                     <Button
                       type="submit"
                       disabled={isSubmitting}
-                      className="rounded-xl"
+                      className="rounded-xl border-0"
+                      style={{ backgroundColor: "#1976d2", color: "#fff" }}
                     >
                       {isSubmitting ? (
                         <>
@@ -243,70 +266,29 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Settings Menu */}
+      {/* Settings Menu — web-style card */}
       <Card className="rounded-2xl border-border/60 shadow-sm overflow-hidden">
         <CardContent className="p-0">
-          <button
-            className="w-full flex items-center gap-3 px-5 py-4 hover:bg-muted/50 transition-colors text-left"
-            onClick={handleNotifications}
-          >
-            <div className="w-9 h-9 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center flex-shrink-0">
-              <Bell className="h-4.5 w-4.5 text-orange-500" />
+          {menuItems.map((item, i) => (
+            <div key={i}>
+              <button
+                className="w-full flex items-center gap-3 px-5 py-4 hover:bg-muted/50 transition-colors text-left"
+                onClick={item.onClick}
+              >
+                <div
+                  className={`w-9 h-9 rounded-xl ${item.bg} flex items-center justify-center flex-shrink-0`}
+                >
+                  {item.icon}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{item.label}</p>
+                  <p className="text-xs text-muted-foreground">{item.sub}</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+              {i < menuItems.length - 1 && <Separator className="mx-5" />}
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium">Notifications</p>
-              <p className="text-xs text-muted-foreground">
-                Manage your alerts
-              </p>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
-          <Separator className="mx-5" />
-          <button
-            className="w-full flex items-center gap-3 px-5 py-4 hover:bg-muted/50 transition-colors text-left"
-            onClick={handleSecurity}
-          >
-            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
-              <Shield className="h-4.5 w-4.5 text-blue-500" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium">Security</p>
-              <p className="text-xs text-muted-foreground">Password & 2FA</p>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
-          <Separator className="mx-5" />
-          <button
-            className="w-full flex items-center gap-3 px-5 py-4 hover:bg-muted/50 transition-colors text-left"
-            onClick={handleSettings}
-          >
-            <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800/50 flex items-center justify-center flex-shrink-0">
-              <SettingsIcon className="h-4.5 w-4.5 text-slate-500" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium">Preferences</p>
-              <p className="text-xs text-muted-foreground">
-                App settings & themes
-              </p>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
-          <Separator className="mx-5" />
-          <button
-            className="w-full flex items-center gap-3 px-5 py-4 hover:bg-muted/50 transition-colors text-left"
-            onClick={() => {}}
-          >
-            <div className="w-9 h-9 rounded-xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center flex-shrink-0">
-              <User className="h-4.5 w-4.5 text-violet-500" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium">Account Details</p>
-              <p className="text-xs text-muted-foreground">
-                Linked accounts & KYC
-              </p>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
+          ))}
         </CardContent>
       </Card>
 
@@ -339,7 +321,7 @@ export default function ProfilePage() {
                 type="button"
                 variant="destructive"
                 className="rounded-xl"
-                onClick={handleLogout}
+                onClick={() => logout()}
               >
                 Log Out
               </Button>

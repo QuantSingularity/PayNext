@@ -1,7 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight, Loader2, Send, UserCircle } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle,
+  Loader2,
+  Send,
+  UserCircle,
+} from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { useForm } from "react-hook-form";
@@ -22,9 +28,9 @@ import { Input } from "@/components/ui/input";
 import { apiClient, mockApiClient, useMockData } from "@/lib/api-client";
 
 const formSchema = z.object({
-  recipient: z.string().min(3, {
-    message: "Recipient must be at least 3 characters.",
-  }),
+  recipient: z
+    .string()
+    .min(3, { message: "Recipient must be at least 3 characters." }),
   amount: z.coerce
     .number({ invalid_type_error: "Amount must be a number." })
     .positive({ message: "Amount must be a positive number." })
@@ -32,7 +38,6 @@ const formSchema = z.object({
   memo: z.string().optional(),
 });
 
-// 1. Move the logic into a separate component
 function SendPageContent() {
   const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,30 +47,19 @@ function SendPageContent() {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      recipient: "",
-      amount: undefined,
-      memo: "",
-    },
+    defaultValues: { recipient: "", amount: undefined, memo: "" },
   });
 
   useEffect(() => {
     const recipient = searchParams.get("recipient");
     const amount = searchParams.get("amount");
     const memo = searchParams.get("memo");
-
-    if (recipient) {
-      form.setValue("recipient", decodeURIComponent(recipient));
-    }
+    if (recipient) form.setValue("recipient", decodeURIComponent(recipient));
     if (amount) {
       const parsed = parseFloat(amount);
-      if (!isNaN(parsed) && parsed > 0) {
-        form.setValue("amount", parsed);
-      }
+      if (!isNaN(parsed) && parsed > 0) form.setValue("amount", parsed);
     }
-    if (memo) {
-      form.setValue("memo", decodeURIComponent(memo));
-    }
+    if (memo) form.setValue("memo", decodeURIComponent(memo));
   }, [searchParams, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -77,7 +71,6 @@ function SendPageContent() {
         amount: values.amount,
         memo: values.memo,
       });
-
       if (response.success && response.data) {
         const txData = response.data as { transactionId: string };
         setLastTransactionId(txData.transactionId);
@@ -100,17 +93,27 @@ function SendPageContent() {
 
   return (
     <div className="space-y-5">
+      {/* Page header — web style */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-          <Send className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+        <div
+          className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm"
+          style={{ backgroundColor: "#1976d2" }}
+        >
+          <Send className="h-5 w-5 text-white" />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight">Send Money</h1>
+        <div>
+          <h1 className="text-xl font-bold tracking-tight">Send Money</h1>
+          <p className="text-xs text-muted-foreground">
+            Fast &amp; secure transfers
+          </p>
+        </div>
       </div>
 
+      {/* Success banner */}
       {lastTransactionId && (
         <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4 flex items-start gap-3">
           <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <ArrowRight className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
           </div>
           <div>
             <p className="text-sm font-semibold text-green-800 dark:text-green-300">
@@ -123,6 +126,7 @@ function SendPageContent() {
         </div>
       )}
 
+      {/* Form card — web card style with rounded-2xl, shadow */}
       <Card className="rounded-2xl border-border/60 shadow-sm">
         <CardHeader className="pb-3 pt-5 px-5">
           <CardTitle className="text-base font-semibold">
@@ -145,7 +149,7 @@ function SendPageContent() {
                         <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           placeholder="Username, email, or phone"
-                          className="pl-9 rounded-xl h-11 bg-muted/30 border-border/50 focus:border-primary"
+                          className="pl-9 rounded-xl h-11 bg-muted/30 border-border/50 focus-visible:ring-[#1976d2]"
                           {...field}
                         />
                       </div>
@@ -164,7 +168,7 @@ function SendPageContent() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-sm font-medium">
-                      Amount ($)
+                      Amount (USD)
                     </FormLabel>
                     <FormControl>
                       <div className="relative">
@@ -176,7 +180,7 @@ function SendPageContent() {
                           step="0.01"
                           min="0.01"
                           placeholder="0.00"
-                          className="pl-7 rounded-xl h-11 bg-muted/30 border-border/50 focus:border-primary text-lg font-semibold"
+                          className="pl-7 rounded-xl h-11 bg-muted/30 border-border/50 focus-visible:ring-[#1976d2] text-lg font-semibold"
                           {...field}
                           value={field.value ?? ""}
                         />
@@ -200,7 +204,7 @@ function SendPageContent() {
                     <FormControl>
                       <Input
                         placeholder="What's this payment for?"
-                        className="rounded-xl h-11 bg-muted/30 border-border/50 focus:border-primary"
+                        className="rounded-xl h-11 bg-muted/30 border-border/50 focus-visible:ring-[#1976d2]"
                         {...field}
                       />
                     </FormControl>
@@ -210,7 +214,8 @@ function SendPageContent() {
               />
               <Button
                 type="submit"
-                className="w-full h-12 rounded-xl font-semibold text-sm bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 shadow-md shadow-blue-500/20 transition-all"
+                className="w-full h-12 rounded-xl font-semibold text-sm shadow-md border-0 transition-all"
+                style={{ backgroundColor: "#1976d2", color: "#fff" }}
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -222,6 +227,7 @@ function SendPageContent() {
                   <>
                     <Send className="mr-2 h-4 w-4" />
                     Send Money
+                    <ArrowRight className="ml-auto h-4 w-4" />
                   </>
                 )}
               </Button>
@@ -238,7 +244,10 @@ export default function SendPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <Loader2
+            className="h-8 w-8 animate-spin"
+            style={{ color: "#1976d2" }}
+          />
         </div>
       }
     >

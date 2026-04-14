@@ -48,10 +48,7 @@ export default function RequestPage() {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      amount: undefined,
-      memo: "",
-    },
+    defaultValues: { amount: undefined, memo: "" },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -62,14 +59,8 @@ export default function RequestPage() {
         amount: values.amount,
         memo: values.memo,
       });
-
       if (response.success && response.data) {
-        const savedRequestData: RequestData = {
-          amount: values.amount,
-          memo: values.memo || "",
-        };
-        setRequestData(savedRequestData);
-
+        setRequestData({ amount: values.amount, memo: values.memo || "" });
         const paymentDetails = {
           userId: user?.id || "user123",
           amount: values.amount,
@@ -97,8 +88,7 @@ export default function RequestPage() {
     try {
       await navigator.clipboard.writeText(qrValue);
       toast.success("Payment link copied to clipboard!");
-    } catch (err) {
-      console.error("Failed to copy:", err);
+    } catch {
       toast.error("Failed to copy link");
     }
   };
@@ -113,9 +103,7 @@ export default function RequestPage() {
           url: qrValue,
         });
       } catch (err) {
-        if ((err as Error).name !== "AbortError") {
-          copyToClipboard();
-        }
+        if ((err as Error).name !== "AbortError") copyToClipboard();
       }
     } else {
       copyToClipboard();
@@ -130,11 +118,17 @@ export default function RequestPage() {
 
   return (
     <div className="space-y-5">
+      {/* Page header */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-          <Landmark className="h-5 w-5 text-green-600 dark:text-green-400" />
+        <div className="w-10 h-10 rounded-2xl bg-green-600 flex items-center justify-center shadow-sm">
+          <Landmark className="h-5 w-5 text-white" />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight">Request Money</h1>
+        <div>
+          <h1 className="text-xl font-bold tracking-tight">Request Money</h1>
+          <p className="text-xs text-muted-foreground">
+            Generate a QR payment link
+          </p>
+        </div>
       </div>
 
       {!qrValue ? (
@@ -156,7 +150,7 @@ export default function RequestPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-sm font-medium">
-                        Amount ($)
+                        Amount (USD)
                       </FormLabel>
                       <FormControl>
                         <div className="relative">
@@ -168,7 +162,7 @@ export default function RequestPage() {
                             step="0.01"
                             min="0.01"
                             placeholder="0.00"
-                            className="pl-7 rounded-xl h-11 bg-muted/30 border-border/50 focus:border-primary text-lg font-semibold"
+                            className="pl-7 rounded-xl h-11 bg-muted/30 border-border/50 focus-visible:ring-green-500 text-lg font-semibold"
                             {...field}
                             value={field.value ?? ""}
                           />
@@ -192,7 +186,7 @@ export default function RequestPage() {
                       <FormControl>
                         <Input
                           placeholder="What's this request for?"
-                          className="rounded-xl h-11 bg-muted/30 border-border/50 focus:border-primary"
+                          className="rounded-xl h-11 bg-muted/30 border-border/50 focus-visible:ring-green-500"
                           {...field}
                         />
                       </FormControl>
@@ -202,7 +196,7 @@ export default function RequestPage() {
                 />
                 <Button
                   type="submit"
-                  className="w-full h-12 rounded-xl font-semibold text-sm bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500 shadow-md shadow-green-500/20 transition-all"
+                  className="w-full h-12 rounded-xl font-semibold text-sm shadow-md border-0 transition-all bg-green-600 hover:bg-green-700 text-white"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
@@ -241,7 +235,7 @@ export default function RequestPage() {
                 value={qrValue}
                 size={200}
                 bgColor={"#ffffff"}
-                fgColor={"#1a1a2e"}
+                fgColor={"#1565c0"}
                 level={"M"}
                 includeMargin={false}
               />

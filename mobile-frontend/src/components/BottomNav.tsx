@@ -30,21 +30,21 @@ const BottomNav = () => {
               className={cn(
                 "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all duration-200",
                 isActive
-                  ? "text-primary"
+                  ? "text-[#1976d2]"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
               <div
                 className={cn(
                   "flex items-center justify-center w-10 h-6 rounded-full transition-all duration-200",
-                  isActive && "bg-primary/10 dark:bg-primary/20",
+                  isActive && "bg-[#1976d2]/10",
                 )}
               >
                 <Icon
                   className={cn(
                     "h-5 w-5 transition-all duration-200",
                     isActive
-                      ? "text-primary scale-110"
+                      ? "text-[#1976d2] scale-110"
                       : "text-muted-foreground",
                   )}
                 />
@@ -52,7 +52,7 @@ const BottomNav = () => {
               <span
                 className={cn(
                   "text-[10px] font-medium transition-all duration-200",
-                  isActive ? "text-primary" : "text-muted-foreground",
+                  isActive ? "text-[#1976d2]" : "text-muted-foreground",
                 )}
               >
                 {item.label}
