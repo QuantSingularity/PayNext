@@ -4,24 +4,25 @@ A full-featured mobile payment app built with **Expo (React Native)** and **Expo
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | Expo SDK 51 + React Native 0.74 |
-| Navigation | Expo Router v3 (file-based) |
-| Auth Persistence | AsyncStorage |
-| Forms | React Hook Form + Zod |
-| QR Scanning | expo-camera (CameraView) |
-| QR Generation | react-native-qrcode-svg |
-| Icons | @expo/vector-icons (Ionicons) |
-| Gradients | expo-linear-gradient |
-| Clipboard | expo-clipboard |
-| Sharing | expo-sharing / React Native Share API |
+| Layer            | Technology                            |
+| ---------------- | ------------------------------------- |
+| Framework        | Expo SDK 51 + React Native 0.74       |
+| Navigation       | Expo Router v3 (file-based)           |
+| Auth Persistence | AsyncStorage                          |
+| Forms            | React Hook Form + Zod                 |
+| QR Scanning      | expo-camera (CameraView)              |
+| QR Generation    | react-native-qrcode-svg               |
+| Icons            | @expo/vector-icons (Ionicons)         |
+| Gradients        | expo-linear-gradient                  |
+| Clipboard        | expo-clipboard                        |
+| Sharing          | expo-sharing / React Native Share API |
 
 ---
 
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js 18+
 - [Expo CLI](https://docs.expo.dev/get-started/installation/): `npm install -g expo-cli`
 - iOS Simulator (macOS) or Android Emulator / physical device with Expo Go
@@ -40,6 +41,7 @@ npx expo start
 ```
 
 Then:
+
 - Press **i** for iOS simulator
 - Press **a** for Android emulator
 - Scan QR code with **Expo Go** on a physical device
@@ -84,6 +86,7 @@ paynext-expo/
 ## Features
 
 ### ✅ Screens
+
 - **Login** — email/password, form validation, show/hide password
 - **Register** — full form + auto-login after registration
 - **Dashboard** — balance card, quick actions, recent transactions, pull-to-refresh
@@ -93,6 +96,7 @@ paynext-expo/
 - **Profile** — edit profile, settings toggles (notifications, biometric), logout
 
 ### ✅ UX / Quality
+
 - Full **dark mode** support (system-aware)
 - **Pull-to-refresh** on Dashboard and Transactions
 - **KeyboardAvoidingView** on all forms
@@ -104,27 +108,28 @@ paynext-expo/
 - `useMockData` flag fixed to work correctly in dev
 
 ### ✅ Native Replacements
-| Web (Next.js) | Native (Expo) |
-|---|---|
-| `useRouter` / `Link` | `expo-router` `useRouter` / `Link` |
-| `localStorage` | `@react-native-async-storage/async-storage` |
-| `html5-qrcode` | `expo-camera` `CameraView` |
-| `qrcode.react` (canvas) | `react-native-qrcode-svg` |
-| `navigator.clipboard` | `expo-clipboard` |
-| `navigator.share` | React Native `Share` API |
-| Tailwind CSS + Radix UI | StyleSheet + custom design tokens |
-| `next/font` | System fonts |
-| `sonner` toasts | `Alert` + inline feedback |
+
+| Web (Next.js)           | Native (Expo)                               |
+| ----------------------- | ------------------------------------------- |
+| `useRouter` / `Link`    | `expo-router` `useRouter` / `Link`          |
+| `localStorage`          | `@react-native-async-storage/async-storage` |
+| `html5-qrcode`          | `expo-camera` `CameraView`                  |
+| `qrcode.react` (canvas) | `react-native-qrcode-svg`                   |
+| `navigator.clipboard`   | `expo-clipboard`                            |
+| `navigator.share`       | React Native `Share` API                    |
+| Tailwind CSS + Radix UI | StyleSheet + custom design tokens           |
+| `next/font`             | System fonts                                |
+| `sonner` toasts         | `Alert` + inline feedback                   |
 
 ---
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|---|---|---|
-| `EXPO_PUBLIC_API_BASE_URL` | `http://localhost:8080` | Backend base URL |
-| `EXPO_PUBLIC_API_GATEWAY_URL` | `http://localhost:8080/api` | API Gateway URL |
-| `EXPO_PUBLIC_ENV` | — | Set to `development` for mock data |
+| Variable                      | Default                     | Description                        |
+| ----------------------------- | --------------------------- | ---------------------------------- |
+| `EXPO_PUBLIC_API_BASE_URL`    | `http://localhost:8080`     | Backend base URL                   |
+| `EXPO_PUBLIC_API_GATEWAY_URL` | `http://localhost:8080/api` | API Gateway URL                    |
+| `EXPO_PUBLIC_ENV`             | —                           | Set to `development` for mock data |
 
 > **Note:** In development (`__DEV__` = true), mock data is always used regardless of the env var.
 
