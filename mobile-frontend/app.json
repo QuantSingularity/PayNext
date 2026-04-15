@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "PayNext",
+    "slug": "paynext",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "paynext",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1976d2"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.paynext.mobile",
+      "infoPlist": {
+        "NSCameraUsageDescription": "PayNext needs camera access to scan QR codes for payments.",
+        "NSFaceIDUsageDescription": "PayNext uses Face ID to authenticate payments securely."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#1976d2"
+      },
+      "package": "com.paynext.mobile",
+      "permissions": ["CAMERA", "USE_BIOMETRIC", "USE_FINGERPRINT"]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow PayNext to access your camera for QR code scanning."
+        }
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": []
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
